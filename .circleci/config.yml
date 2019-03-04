@@ -1,0 +1,29 @@
+version: 2
+
+references:
+  cache_key: &cache_key
+    jars-{{ checksum "build.gradle" }}-{{ checksum "gradle/wrapper/gradle-wrapper.properties" }}
+
+jobs:
+  build:
+    docker:
+      - image: circleci/openjdk:8-jdk
+    environment:
+      TERM: dumb
+      GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+    steps:
+      - checkout
+      - restore_cache:
+          key: *cache_key
+      - run:
+          name: Run Tests
+          command: ./gradlew test
+      - save_cache:
+          key: *cache_key
+          paths:
+            - ~/.gradle/caches
+            - ~/.gradle/wrapper
+      - store_artifacts:
+          path: build/reports
+      - store_test_results:
+          path: build/test-results

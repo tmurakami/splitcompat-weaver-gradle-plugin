@@ -1,0 +1,113 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.3.20'
+    id 'com.github.ben-manes.versions' version '0.21.0'
+    id 'pl.allegro.tech.build.axion-release' version '1.10.0'
+}
+
+apply plugin: 'maven-publish'
+
+scmVersion {
+    tag {
+        prefix = ''
+    }
+    hooks {
+        pre 'fileUpdate', [file       : 'README.md',
+                           pattern    : { v, p -> /(['\/])$v(['\/])/ },
+                           replacement: { v, p -> "\$1$v\$2" }]
+        pre 'fileUpdate', [file       : 'README.md',
+                           pattern    : { v, p -> /(\/Kotlin-)[\d.]+/ },
+                           replacement: { v, p -> "\$1${versions.kotlin}" }]
+        pre 'commit', { v, p -> "Release version: $v [ci skip]" }
+    }
+}
+
+//version = scmVersion.version
+version = '0.0.2'
+group = 'com.github.tmurakami'
+
+repositories {
+    google()
+    mavenCentral()
+    jcenter()
+}
+
+configurations {
+    ktlint
+}
+
+dependencies {
+    ktlint 'com.github.shyiko:ktlint:0.30.0'
+    implementation gradleApi()
+    implementation 'com.android.tools.build:gradle:3.3.1'
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'com.google.truth:truth:0.43'
+    testImplementation 'com.google.android:android:4.1.1.4'
+    testImplementation 'io.mockk:mockk:1.9.1'
+    testImplementation 'org.objenesis:objenesis:3.0.1'
+}
+
+dependencyUpdates.resolutionStrategy {
+    componentSelection.all {
+        if (candidate.version =~ /(?i)-(?:alpha|beta|rc)[-\d]?/) reject('Release candidate')
+    }
+}
+
+task ktlint(type: JavaExec, group: 'verification') {
+    inputs.files fileTree(dir: 'src', include: '**/*.kt')
+    outputs.dir 'src'
+    description = 'Check Kotlin code style.'
+    classpath = configurations.ktlint
+    main = 'com.github.shyiko.ktlint.Main'
+    args 'src/**/*.kt'
+}
+check.dependsOn ktlint
+
+task ktlintFormat(type: JavaExec, group: 'formatting') {
+    inputs.files fileTree(dir: 'src', include: '**/*.kt')
+    outputs.dir 'src'
+    description = 'Fix Kotlin code style deviations.'
+    classpath = configurations.ktlint
+    main = 'com.github.shyiko.ktlint.Main'
+    args '-F', 'src/**/*.kt'
+}
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'SplitCompat weaver'
+                description = "A Gradle plugin which automatically weaves 'SplitCompat#install' " +
+                        "into activities and services in your Dynamic Function Modules"
+                url = 'https://github.com/tmurakami/splitcompat-weaver-gradle-plugin'
+                inceptionYear = '2019'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'tmurakami'
+                        name = 'Tsuyoshi Murakami'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/tmurakami/splitcompat-weaver-gradle-plugin.git'
+                    developerConnection = 'scm:git:ssh://github.com/tmurakami/splitcompat-weaver-gradle-plugin.git'
+                    url = 'https://github.com/tmurakami/splitcompat-weaver-gradle-plugin'
+                }
+            }
+        }
+        mavenSources(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+        }
+    }
+}
