@@ -36,14 +36,15 @@ internal class ComponentNameCollector(
         super.startElement(uri, localName, qName, attributes)
         when (qName) {
             "manifest" -> packageName = attributes.getValue("package")
-            "activity", "service" -> {
+            "activity",
+            "service" -> {
                 val name = attributes.getValue("android:name")
                 require(!name.startsWith("\${")) {
-                    "The 'android:name' must not be a variable: ${manifest.canonicalPath}"
+                    "The 'android:name' must not be a variable: $manifest"
                 }
-                val className = if (name[0] == '.') packageName + name else name
-                LOGGER.run { if (isDebugEnabled) debug("Target $qName: $className") }
-                names += className.replace('.', '/')
+                val cls = if (name[0] == '.') packageName + name else name
+                names += cls.replace('.', '/')
+                LOGGER.run { if (isDebugEnabled) debug("Target $qName: $cls") }
             }
         }
     }

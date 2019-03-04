@@ -37,11 +37,13 @@ configurations {
 dependencies {
     ktlint 'com.github.shyiko:ktlint:0.30.0'
     implementation gradleApi()
-    implementation 'com.android.tools.build:gradle:3.3.1'
+    implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
+    compileOnly 'com.android.tools.build:gradle:3.3.1'
     testImplementation 'junit:junit:4.12'
     testImplementation 'com.google.truth:truth:0.43'
-    testImplementation 'com.google.android:android:4.1.1.4'
     testImplementation 'io.mockk:mockk:1.9.1'
+    testImplementation 'com.google.android:android:4.1.1.4'
+    testImplementation 'org.ow2.asm:asm-util:6.0'
     testImplementation 'org.objenesis:objenesis:3.0.1'
 }
 

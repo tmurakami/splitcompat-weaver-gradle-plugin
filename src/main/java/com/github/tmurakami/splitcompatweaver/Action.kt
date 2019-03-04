@@ -16,33 +16,51 @@
 
 package com.github.tmurakami.splitcompatweaver
 
+import org.gradle.api.logging.Logging
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
 
-internal enum class Action {
-    COPY {
-        override fun invoke(source: File, target: File) {
-            source.copyTo(target, overwrite = true)
-        }
-    },
-    DELETE {
-        override fun invoke(source: File, target: File) {
-            target.delete()
-        }
-    },
-    WEAVE {
-        override fun invoke(source: File, target: File) = target.run {
-            parentFile.run {
-                check(isDirectory || mkdirs()) { "Cannot make directory: $this" }
-            }
-            writeBytes(source.inputStream().use { i ->
-                val reader = ClassReader(i)
-                val writer = ClassWriter(reader, 0)
-                writer.also { reader.accept(SplitCompatWeaver(it), 0) }.toByteArray()
-            })
-        }
-    };
+internal sealed class Action {
+    abstract operator fun invoke(target: File)
+}
 
-    abstract operator fun invoke(source: File, target: File)
+internal class Copy(private val source: File) : Action() {
+    override fun invoke(target: File) {
+        source.copyTo(target, true)
+        LOGGER.run { if (isDebugEnabled) debug("Copied $source to $target") }
+    }
+
+    private companion object {
+        private val LOGGER = Logging.getLogger(Copy::class.java)
+    }
+}
+
+internal object Delete : Action() {
+    private val LOGGER = Logging.getLogger(Delete::class.java)
+    override fun invoke(target: File) {
+        target.delete()
+        LOGGER.run { if (isDebugEnabled) debug("Deleted $target") }
+    }
+}
+
+internal object Nop : Action() {
+    override fun invoke(target: File) = Unit
+}
+
+internal class Weave(private val source: File) : Action() {
+    override fun invoke(target: File) = target.run {
+        parentFile.run {
+            check(isDirectory || mkdirs()) { "Cannot make directory: $this" }
+        }
+        writeBytes(source.inputStream().use {
+            val cr = ClassReader(it)
+            ClassWriter(cr, 0).apply { cr.accept(SplitCompatWeaver(this), 0) }.toByteArray()
+        })
+        LOGGER.run { if (isDebugEnabled) debug("Woven 'SplitCompat#install' into $target") }
+    }
+
+    private companion object {
+        private val LOGGER = Logging.getLogger(Weave::class.java)
+    }
 }

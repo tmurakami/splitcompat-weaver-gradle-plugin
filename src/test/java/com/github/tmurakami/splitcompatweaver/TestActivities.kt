@@ -22,13 +22,13 @@ import com.google.android.play.core.splitcompat.SplitCompat
 import com.google.common.truth.Truth.assertThat
 
 open class TestActivity protected constructor() : Activity() {
-    private var superAttachBaseContextCalled = false
+    private var called = false
 
     public override fun attachBaseContext(newBase: Context?) {
-        superAttachBaseContextCalled = true
+        called = true
     }
 
-    fun assertSuperAttachBaseContextCalled() = assertThat(superAttachBaseContextCalled).isTrue()
+    fun assertSuperAttachBaseContextCalled() = assertThat(called).isTrue()
 }
 
 class TestActivity1 : TestActivity()

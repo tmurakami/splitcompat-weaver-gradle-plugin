@@ -35,8 +35,8 @@ import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.RETURN
 
 internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
-    private lateinit var className: String
-    private var superClassName: String? = null
+    private lateinit var name: String
+    private var superName: String? = null
     private var shouldOverrideAttachBaseContext = true
 
     override fun visit(
@@ -47,8 +47,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         superName: String?,
         interfaces: Array<out String>?
     ) {
-        className = name
-        superClassName = superName
+        this.name = name
+        this.superName = superName
         super.visit(version, access, name, signature, superName, interfaces)
     }
 
@@ -59,38 +59,11 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         signature: String?,
         exceptions: Array<out String>?
     ): MethodVisitor {
-        val visitor = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return if (isAttachBaseContext(name, descriptor)) {
+        val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
+        return if (name == ATTACH_BASE_CONTEXT && descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR) {
             shouldOverrideAttachBaseContext = false
-            object : MethodVisitor(api, visitor) {
-                override fun visitMethodInsn(
-                    opcode: Int,
-                    owner: String,
-                    name: String,
-                    descriptor: String,
-                    isInterface: Boolean
-                ) {
-                    LOGGER.run {
-                        if (isWarnEnabled &&
-                            isSplitCompatInstallCall(opcode, owner, name, descriptor)
-                        ) {
-                            warn(
-                                "Unnecessary call to 'SplitCompat#$INSTALL' in " +
-                                    "${className.replace('/', '.')}#$ATTACH_BASE_CONTEXT"
-                            )
-                        }
-                    }
-                    super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-                    if (isSuperAttachBaseContextCall(opcode, owner, name, descriptor)) {
-                        mv.visitSplitCompatInstallCall()
-                    }
-                }
-
-                override fun visitMaxs(maxStack: Int, maxLocals: Int) {
-                    super.visitMaxs(maxStack, maxLocals + 2)
-                }
-            }
-        } else visitor
+            SplitCompatInstallAdder(mv)
+        } else mv
     }
 
     override fun visitEnd() {
@@ -103,7 +76,15 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
                 null
             ).run {
                 visitCode()
-                visitSuperAttachBaseContextCall()
+                visitVarInsn(ALOAD, 0)
+                visitVarInsn(ALOAD, 1)
+                visitMethodInsn(
+                    INVOKESPECIAL,
+                    superName,
+                    ATTACH_BASE_CONTEXT,
+                    ATTACH_BASE_CONTEXT_DESCRIPTOR,
+                    false
+                )
                 visitSplitCompatInstallCall()
                 visitInsn(RETURN)
                 visitMaxs(2, 4)
@@ -113,49 +94,11 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         super.visitEnd()
     }
 
-    private fun isAttachBaseContext(name: String, descriptor: String): Boolean =
-        name == ATTACH_BASE_CONTEXT && descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR
-
-    private fun isSplitCompatInstallCall(
-        opcode: Int,
-        owner: String,
-        name: String,
-        descriptor: String
-    ): Boolean = opcode == INVOKESTATIC &&
-        owner == SPLIT_COMPAT &&
-        name == INSTALL &&
-        descriptor == INSTALL_DESCRIPTOR
-
-    private fun isSuperAttachBaseContextCall(
-        opcode: Int,
-        owner: String,
-        name: String,
-        descriptor: String
-    ): Boolean = opcode == INVOKESPECIAL &&
-        owner == superClassName &&
-        name == ATTACH_BASE_CONTEXT &&
-        descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR
-
-    private fun MethodVisitor.visitSuperAttachBaseContextCall() {
-        visitVarInsn(ALOAD, 0)
-        visitVarInsn(ALOAD, 1)
-        visitMethodInsn(
-            INVOKESPECIAL,
-            superClassName,
-            ATTACH_BASE_CONTEXT,
-            ATTACH_BASE_CONTEXT_DESCRIPTOR,
-            false
-        )
-    }
-
     private fun MethodVisitor.visitSplitCompatInstallCall() {
         val start = Label()
         val end = Label()
         val exceptionHandler = Label()
-        visitTryCatchBlock(
-            start, end, exceptionHandler,
-            NO_CLASS_DEF_FOUND_ERROR
-        )
+        visitTryCatchBlock(start, end, exceptionHandler, NO_CLASS_DEF_FOUND_ERROR)
 
         visitLabel(start)
         visitVarInsn(ALOAD, 0)
@@ -182,16 +125,43 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         val isInstantApp = Label()
         visitJumpInsn(IFNE, isInstantApp)
         visitVarInsn(ALOAD, 0)
-        visitMethodInsn(
-            INVOKESTATIC,
-            SPLIT_COMPAT,
-            INSTALL,
-            INSTALL_DESCRIPTOR,
-            false
-        )
+        visitMethodInsn(INVOKESTATIC, SPLIT_COMPAT, INSTALL, INSTALL_DESCRIPTOR, false)
         visitInsn(POP)
 
         visitLabel(isInstantApp)
+    }
+
+    private inner class SplitCompatInstallAdder(mv: MethodVisitor) :
+        MethodVisitor(api, mv) {
+        override fun visitMethodInsn(
+            opcode: Int,
+            owner: String,
+            name: String,
+            descriptor: String,
+            isInterface: Boolean
+        ) {
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+            if (opcode == INVOKESPECIAL &&
+                owner == superName &&
+                name == ATTACH_BASE_CONTEXT &&
+                descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR
+            ) {
+                mv.visitSplitCompatInstallCall()
+            } else if (LOGGER.isWarnEnabled &&
+                opcode == INVOKESTATIC &&
+                owner == SPLIT_COMPAT &&
+                name == INSTALL &&
+                descriptor == INSTALL_DESCRIPTOR
+            ) {
+                val cls = this@SplitCompatWeaver.name.replace('/', '.')
+                val attachBaseContext = "$cls#$ATTACH_BASE_CONTEXT"
+                LOGGER.warn("Unnecessary call to 'SplitCompat#$INSTALL' in $attachBaseContext")
+            }
+        }
+
+        override fun visitMaxs(maxStack: Int, maxLocals: Int) {
+            super.visitMaxs(maxStack, maxLocals + 2)
+        }
     }
 
     private companion object {

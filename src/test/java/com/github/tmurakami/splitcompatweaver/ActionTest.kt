@@ -20,39 +20,49 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassReader.SKIP_DEBUG
+import org.objectweb.asm.ClassReader.SKIP_FRAMES
+import org.objectweb.asm.util.TraceClassVisitor
 import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 
 class ActionTest {
     @[Rule JvmField]
     val folder = TemporaryFolder()
 
-    private val source = File(
-        javaClass.getResource(
-            "/${TestActivity1::class.java.name.replace('.', '/')}.class"
-        ).path
-    )
-
     @Test
     fun copy() {
         val target = folder.newFile()
-        assertThat(target.delete()).isTrue()
-        Action.COPY(source, target)
-        assertThat(target.readBytes()).isEqualTo(source.readBytes())
+        Copy(SOURCE)(target)
+        assertThat(target.readBytes()).isEqualTo(SOURCE.readBytes())
     }
 
     @Test
     fun delete() {
         val target = folder.newFile()
         assertThat(target.exists()).isTrue()
-        Action.DELETE(source, target)
+        Delete(target)
         assertThat(target.exists()).isFalse()
     }
 
     @Test
     fun weave() {
+        val install = "com/google/android/play/core/splitcompat/SplitCompat.install"
+        val flags = SKIP_DEBUG or SKIP_FRAMES
+        assertThat(SOURCE.inputStream().use { i ->
+            StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
+        }.toString()).doesNotContain(install)
         val target = folder.newFile()
-        assertThat(target.delete()).isTrue()
-        Action.WEAVE(source, target)
-        assertThat(target.readBytes()).isNotEqualTo(source.readBytes())
+        Weave(SOURCE)(target)
+        assertThat(target.inputStream().use { i ->
+            StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
+        }.toString()).contains(install)
+    }
+
+    private companion object {
+        private val PATH = "/${TestActivity1::class.java.name.replace('.', '/')}.class"
+        private val SOURCE = File(ActionTest::class.java.getResource(PATH).path)
     }
 }

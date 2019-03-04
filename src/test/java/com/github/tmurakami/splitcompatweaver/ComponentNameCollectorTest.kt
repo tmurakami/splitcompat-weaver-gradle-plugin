@@ -31,22 +31,22 @@ class ComponentNameCollectorTest {
     @Test
     fun parseManifest() {
         val names = mutableSetOf<String>()
-        val saxParser = SAXParserFactory.newInstance().newSAXParser()
+        val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(File(""), names)
-        MANIFEST.reader().use { saxParser.parse(InputSource(it), collector) }
+        MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
         assertThat(names).containsExactly("a/b/A1", "x/y/A2", "a/b/S1", "x/y/z/S2")
     }
 
     @Test
     fun parseInvalidManifest() {
-        val path = "/x/y/app/src/main/AndroidManifest.xml"
+        val path = "/foo/bar/app/src/main/AndroidManifest.xml"
         expectedException.run {
             expect(IllegalArgumentException::class.java)
             expectMessage("The 'android:name' must not be a variable: $path")
         }
-        val saxParser = SAXParserFactory.newInstance().newSAXParser()
-        val handler = ComponentNameCollector(File(path), mutableSetOf())
-        INVALID_MANIFEST.reader().use { saxParser.parse(InputSource(it), handler) }
+        val parser = SAXParserFactory.newInstance().newSAXParser()
+        val collector = ComponentNameCollector(File(path), mutableSetOf())
+        INVALID_MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
     }
 
     private companion object {
