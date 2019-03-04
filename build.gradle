@@ -21,8 +21,7 @@ scmVersion {
     }
 }
 
-//version = scmVersion.version
-version = '0.0.2'
+version = scmVersion.version
 group = 'com.github.tmurakami'
 
 repositories {
