@@ -49,18 +49,6 @@ class ComponentNameCollectorTest {
         INVALID_MANIFEST.reader().use { saxParser.parse(InputSource(it), handler) }
     }
 
-    private fun manifest(isOnDemand: Boolean?): String = """
-            |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">
-            |    <dist:module ${isOnDemand?.let { "dist:onDemand=\"$it\" " } ?: ""}/>
-            |    <application>
-            |        <activity android:name=".A1" />
-            |        <activity android:name="x.y.A2" />
-            |        <service android:name=".S1"/>
-            |        <service android:name="x.y.z.S2"/>
-            |    </application>
-            |</manifest>
-            |""".trimMargin()
-
     private companion object {
         private val MANIFEST = """
             |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">

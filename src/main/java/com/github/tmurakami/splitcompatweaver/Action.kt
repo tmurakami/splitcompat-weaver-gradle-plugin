@@ -37,9 +37,9 @@ internal enum class Action {
                 check(isDirectory || mkdirs()) { "Cannot make directory: $this" }
             }
             writeBytes(source.inputStream().use { i ->
-                val cr = ClassReader(i)
-                val cw = ClassWriter(cr, 0)
-                cw.also { cr.accept(SplitCompatWeaver(it), 0) }.toByteArray()
+                val reader = ClassReader(i)
+                val writer = ClassWriter(reader, 0)
+                writer.also { reader.accept(SplitCompatWeaver(it), 0) }.toByteArray()
             })
         }
     };

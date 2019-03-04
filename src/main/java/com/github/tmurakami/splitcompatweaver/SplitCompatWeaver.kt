@@ -34,7 +34,7 @@ import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.RETURN
 
-class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
+internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     private lateinit var className: String
     private var superClassName: String? = null
     private var shouldOverrideAttachBaseContext = true

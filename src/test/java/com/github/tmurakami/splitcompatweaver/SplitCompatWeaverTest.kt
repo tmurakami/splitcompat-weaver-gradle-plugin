@@ -56,9 +56,9 @@ class SplitCompatWeaverTest {
         val c = java
         val activityName = c.name
         val bytes = c.getResourceAsStream("/${c.name.replace('.', '/')}.class").use { i ->
-            val cr = ClassReader(i)
-            val cw = ClassWriter(cr, 0)
-            cw.also { cr.accept(SplitCompatWeaver(it), 0) }.toByteArray()
+            val reader = ClassReader(i)
+            val writer = ClassWriter(reader, 0)
+            writer.also { reader.accept(SplitCompatWeaver(it), 0) }.toByteArray()
         }
         val loader = object : ClassLoader() {
             override fun loadClass(name: String?, resolve: Boolean): Class<*> =

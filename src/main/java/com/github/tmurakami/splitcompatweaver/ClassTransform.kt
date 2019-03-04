@@ -34,7 +34,7 @@ import java.io.File
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
-class ClassTransform(private val extension: AppExtension) : Transform() {
+internal class ClassTransform(private val extension: AppExtension) : Transform() {
     override fun isIncremental(): Boolean = true
     override fun getName(): String = NAME
     override fun getScopes(): MutableSet<in QualifiedContent.Scope> = SCOPES
@@ -50,19 +50,19 @@ class ClassTransform(private val extension: AppExtension) : Transform() {
         invocation.inputs.asSequence()
             .flatMap { it.directoryInputs.asSequence() }
             .flatMap { input ->
-                val dir = input.file
-                val root = "${dir.canonicalPath}/"
+                val rootDir = input.file
+                val rootPath = "${rootDir.canonicalPath}/"
                 if (isIncremental) {
                     input.changedFiles.asSequence()
                         .filterNot { (_, status) -> status == NOTCHANGED }
-                        .map { (source, status) -> Triple(root, source, status) }
+                        .map { (source, status) -> Triple(rootPath, source, status!!) }
                 } else {
-                    dir.walk().filter { it.isFile }.map { Triple(root, it, ADDED) }
+                    rootDir.walk().filter { it.isFile }.map { Triple(rootPath, it, ADDED) }
                 }
-            }.forEach { (root, source, status) ->
+            }.forEach { (rootPath, source, status) ->
                 LOGGER.run { if (isDebugEnabled) debug("Status [$status] $source") }
-                val path = source.canonicalPath.removePrefix(root)
-                when (status!!) {
+                val path = source.canonicalPath.removePrefix(rootPath)
+                when (status) {
                     NOTCHANGED -> null
                     REMOVED -> DELETE
                     ADDED, CHANGED -> {
