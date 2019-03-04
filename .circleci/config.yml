@@ -10,7 +10,7 @@ jobs:
       - image: circleci/openjdk:8-jdk
     environment:
       TERM: dumb
-      GRADLE_OPTS: '-Dorg.gradle.daemon=false'
+      GRADLE_OPTS: '-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx1024m'
     steps:
       - checkout
       - restore_cache:
