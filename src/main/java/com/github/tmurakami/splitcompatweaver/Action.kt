@@ -57,7 +57,7 @@ internal class Weave(private val source: File) : Action() {
             val cr = ClassReader(it)
             ClassWriter(cr, 0).apply { cr.accept(SplitCompatWeaver(this), 0) }.toByteArray()
         })
-        LOGGER.run { if (isDebugEnabled) debug("Woven 'SplitCompat#install' into $target") }
+        LOGGER.run { if (isDebugEnabled) debug("Wove 'SplitCompat#install' call into $target") }
     }
 
     private companion object {

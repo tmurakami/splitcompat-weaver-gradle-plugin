@@ -37,7 +37,7 @@ import org.objectweb.asm.Opcodes.RETURN
 internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     private lateinit var name: String
     private var superName: String? = null
-    private var shouldOverrideAttachBaseContext = true
+    private var isWoven = false
 
     override fun visit(
         version: Int,
@@ -60,14 +60,14 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         exceptions: Array<out String>?
     ): MethodVisitor {
         val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return if (name == ATTACH_BASE_CONTEXT && descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR) {
-            shouldOverrideAttachBaseContext = false
-            SplitCompatInstallAdder(mv)
-        } else mv
+        return if (isWoven ||
+            name != ATTACH_BASE_CONTEXT ||
+            descriptor != ATTACH_BASE_CONTEXT_DESCRIPTOR
+        ) mv else SplitCompatInstallAdder(mv).also { isWoven = true }
     }
 
     override fun visitEnd() {
-        if (shouldOverrideAttachBaseContext) {
+        if (!isWoven) {
             super.visitMethod(
                 ACC_PROTECTED,
                 ATTACH_BASE_CONTEXT,
@@ -168,12 +168,12 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         private val LOGGER = Logging.getLogger(SplitCompatWeaver::class.java)
         private const val ATTACH_BASE_CONTEXT = "attachBaseContext"
         private const val ATTACH_BASE_CONTEXT_DESCRIPTOR = "(Landroid/content/Context;)V"
+        private const val NO_CLASS_DEF_FOUND_ERROR = "java/lang/NoClassDefFoundError"
         private const val INSTANT_APPS = "com/google/android/instantapps/InstantApps"
         private const val IS_INSTANT_APP = "isInstantApp"
         private const val IS_INSTANT_APP_DESCRIPTOR = "(Landroid/content/Context;)Z"
         private const val SPLIT_COMPAT = "com/google/android/play/core/splitcompat/SplitCompat"
         private const val INSTALL = "install"
         private const val INSTALL_DESCRIPTOR = "(Landroid/content/Context;)Z"
-        private const val NO_CLASS_DEF_FOUND_ERROR = "java/lang/NoClassDefFoundError"
     }
 }

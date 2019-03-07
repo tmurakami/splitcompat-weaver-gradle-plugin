@@ -84,7 +84,7 @@ publishing {
             pom {
                 name = 'SplitCompat weaver'
                 description = "A Gradle plugin which automatically weaves 'SplitCompat#install' " +
-                        "into activities and services in your Dynamic Function Modules"
+                        "calls into activities and services in a dynamic feature module"
                 url = 'https://github.com/tmurakami/splitcompat-weaver-gradle-plugin'
                 inceptionYear = '2019'
                 licenses {
