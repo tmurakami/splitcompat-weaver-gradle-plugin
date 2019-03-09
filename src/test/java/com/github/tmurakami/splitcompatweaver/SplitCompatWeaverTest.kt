@@ -16,7 +16,6 @@
 
 package com.github.tmurakami.splitcompatweaver
 
-import com.google.android.instantapps.InstantApps
 import com.google.android.play.core.splitcompat.SplitCompat
 import io.mockk.every
 import io.mockk.mockk
@@ -35,24 +34,22 @@ import kotlin.reflect.KClass
 @RunWith(Theories::class)
 class SplitCompatWeaverTest {
     @Theory
-    fun test(testData: TestData, instantAppsNotFound: Boolean) {
+    fun test(testData: TestData) {
         testData.let { (activityClass, installCalls) ->
-            val activity = activityClass.create(instantAppsNotFound)
-            mockkStatic(InstantApps::class, SplitCompat::class)
+            val activity = activityClass.create()
+            mockkStatic(SplitCompat::class)
             try {
-                every { InstantApps.isInstantApp(activity) } returns false
                 every { SplitCompat.install(activity) } returns true
                 activity.attachBaseContext(mockk())
                 activity.assertSuperAttachBaseContextCalled()
-                verify(inverse = instantAppsNotFound) { InstantApps.isInstantApp(activity) }
                 verify(exactly = installCalls) { SplitCompat.install(activity) }
             } finally {
-                unmockkStatic(InstantApps::class, SplitCompat::class)
+                unmockkStatic(SplitCompat::class)
             }
         }
     }
 
-    private fun KClass<out TestActivity>.create(instantAppsNotFound: Boolean): TestActivity {
+    private fun KClass<out TestActivity>.create(): TestActivity {
         val cls = java
         val activity = cls.name
         val bytecode = cls.getResourceAsStream("/${activity.replace('.', '/')}.class").use {
@@ -61,12 +58,10 @@ class SplitCompatWeaverTest {
         }
         val classLoader = object : ClassLoader(cls.classLoader) {
             override fun loadClass(name: String, resolve: Boolean): Class<*> =
-                when {
-                    instantAppsNotFound && name == InstantApps::class.java.name -> {
-                        throw ClassNotFoundException(name)
-                    }
-                    name == activity -> defineClass(name, bytecode, 0, bytecode.size)
-                    else -> super.loadClass(name, resolve)
+                if (name == activity) {
+                    defineClass(name, bytecode, 0, bytecode.size)
+                } else {
+                    super.loadClass(name, resolve)
                 }
         }
         return ObjenesisStd(false).newInstance(classLoader.loadClass(activity)) as TestActivity
@@ -84,7 +79,5 @@ class SplitCompatWeaverTest {
             TestData(TestActivity2::class),
             TestData(TestActivity3::class, installCalls = 2)
         )
-        @[DataPoints JvmField Suppress("BooleanLiteralArgument")]
-        val INSTANT_APPS_NOT_FOUND = booleanArrayOf(false, true)
     }
 }

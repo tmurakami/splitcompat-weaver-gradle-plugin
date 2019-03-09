@@ -18,19 +18,12 @@ package com.github.tmurakami.splitcompatweaver
 
 import org.gradle.api.logging.Logging
 import org.objectweb.asm.ClassVisitor
-import org.objectweb.asm.Label
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ACC_PROTECTED
 import org.objectweb.asm.Opcodes.ALOAD
 import org.objectweb.asm.Opcodes.ASM6
-import org.objectweb.asm.Opcodes.ASTORE
-import org.objectweb.asm.Opcodes.GOTO
-import org.objectweb.asm.Opcodes.ICONST_0
-import org.objectweb.asm.Opcodes.IFNE
-import org.objectweb.asm.Opcodes.ILOAD
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
-import org.objectweb.asm.Opcodes.ISTORE
 import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.RETURN
 
@@ -95,40 +88,9 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     }
 
     private fun MethodVisitor.visitSplitCompatInstallCall() {
-        val start = Label()
-        val end = Label()
-        val exceptionHandler = Label()
-        visitTryCatchBlock(start, end, exceptionHandler, NO_CLASS_DEF_FOUND_ERROR)
-
-        visitLabel(start)
-        visitVarInsn(ALOAD, 0)
-        visitMethodInsn(
-            INVOKESTATIC,
-            INSTANT_APPS,
-            IS_INSTANT_APP,
-            IS_INSTANT_APP_DESCRIPTOR,
-            false
-        )
-        visitVarInsn(ISTORE, 2)
-
-        visitLabel(end)
-        val testIfInstantApp = Label()
-        visitJumpInsn(GOTO, testIfInstantApp)
-
-        visitLabel(exceptionHandler)
-        visitVarInsn(ASTORE, 3)
-        visitInsn(ICONST_0)
-        visitVarInsn(ISTORE, 2)
-
-        visitLabel(testIfInstantApp)
-        visitVarInsn(ILOAD, 2)
-        val isInstantApp = Label()
-        visitJumpInsn(IFNE, isInstantApp)
         visitVarInsn(ALOAD, 0)
         visitMethodInsn(INVOKESTATIC, SPLIT_COMPAT, INSTALL, INSTALL_DESCRIPTOR, false)
         visitInsn(POP)
-
-        visitLabel(isInstantApp)
     }
 
     private inner class SplitCompatInstallAdder(mv: MethodVisitor) :
