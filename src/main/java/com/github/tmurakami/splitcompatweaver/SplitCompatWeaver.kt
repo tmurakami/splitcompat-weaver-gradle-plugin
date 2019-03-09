@@ -16,7 +16,6 @@
 
 package com.github.tmurakami.splitcompatweaver
 
-import org.gradle.api.logging.Logging
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ACC_PROTECTED
@@ -109,15 +108,6 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
                 descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR
             ) {
                 mv.visitSplitCompatInstallCall()
-            } else if (LOGGER.isWarnEnabled &&
-                opcode == INVOKESTATIC &&
-                owner == SPLIT_COMPAT &&
-                name == INSTALL &&
-                descriptor == INSTALL_DESCRIPTOR
-            ) {
-                val cls = this@SplitCompatWeaver.name.replace('/', '.')
-                val attachBaseContext = "$cls#$ATTACH_BASE_CONTEXT"
-                LOGGER.warn("Unnecessary call to 'SplitCompat#$INSTALL' in $attachBaseContext")
             }
         }
 
@@ -127,13 +117,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     }
 
     private companion object {
-        private val LOGGER = Logging.getLogger(SplitCompatWeaver::class.java)
         private const val ATTACH_BASE_CONTEXT = "attachBaseContext"
         private const val ATTACH_BASE_CONTEXT_DESCRIPTOR = "(Landroid/content/Context;)V"
-        private const val NO_CLASS_DEF_FOUND_ERROR = "java/lang/NoClassDefFoundError"
-        private const val INSTANT_APPS = "com/google/android/instantapps/InstantApps"
-        private const val IS_INSTANT_APP = "isInstantApp"
-        private const val IS_INSTANT_APP_DESCRIPTOR = "(Landroid/content/Context;)Z"
         private const val SPLIT_COMPAT = "com/google/android/play/core/splitcompat/SplitCompat"
         private const val INSTALL = "install"
         private const val INSTALL_DESCRIPTOR = "(Landroid/content/Context;)Z"

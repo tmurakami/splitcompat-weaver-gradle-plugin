@@ -34,18 +34,16 @@ import kotlin.reflect.KClass
 @RunWith(Theories::class)
 class SplitCompatWeaverTest {
     @Theory
-    fun test(testData: TestData) {
-        testData.let { (activityClass, installCalls) ->
-            val activity = activityClass.createSplitCompatWovenActivity()
-            mockkStatic(SplitCompat::class)
-            try {
-                every { SplitCompat.install(activity) } returns true
-                activity.attachBaseContext(mockk())
-                activity.assertSuperAttachBaseContextCalled()
-                verify(exactly = installCalls) { SplitCompat.install(activity) }
-            } finally {
-                unmockkStatic(SplitCompat::class)
-            }
+    fun test(activityClass: KClass<out TestActivity>) {
+        val activity = activityClass.createSplitCompatWovenActivity()
+        mockkStatic(SplitCompat::class)
+        try {
+            every { SplitCompat.install(activity) } returns true
+            activity.attachBaseContext(mockk())
+            activity.assertSuperAttachBaseContextCalled()
+            verify { SplitCompat.install(activity) }
+        } finally {
+            unmockkStatic(SplitCompat::class)
         }
     }
 
@@ -67,17 +65,8 @@ class SplitCompatWeaverTest {
         return ObjenesisStd(false).newInstance(classLoader.loadClass(activity)) as TestActivity
     }
 
-    data class TestData(
-        val activityClass: KClass<out TestActivity>,
-        val installCalls: Int = 1
-    )
-
     companion object {
         @[DataPoints JvmField]
-        val TEST_DATA = arrayOf(
-            TestData(TestActivity1::class),
-            TestData(TestActivity2::class),
-            TestData(TestActivity3::class, installCalls = 2)
-        )
+        val TEST_DATA = arrayOf(TestActivity1::class, TestActivity2::class)
     }
 }
