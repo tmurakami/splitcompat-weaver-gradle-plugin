@@ -26,7 +26,7 @@ import javax.xml.parsers.SAXParserFactory
 
 class ComponentNameCollectorTest {
     @[Rule JvmField]
-    val expectedException = ExpectedException.none()!!
+    val expectedException: ExpectedException = ExpectedException.none()!!
 
     @Test
     fun parseManifest() {

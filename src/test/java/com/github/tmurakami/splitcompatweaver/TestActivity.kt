@@ -18,7 +18,6 @@ package com.github.tmurakami.splitcompatweaver
 
 import android.app.Activity
 import android.content.Context
-import com.google.android.play.core.splitcompat.SplitCompat
 import com.google.common.truth.Truth.assertThat
 
 open class TestActivity protected constructor() : Activity() {
@@ -36,11 +35,4 @@ class TestActivity1 : TestActivity()
 class TestActivity2 : TestActivity() {
     @Suppress("RedundantOverride")
     override fun attachBaseContext(newBase: Context?) = super.attachBaseContext(newBase)
-}
-
-class TestActivity3 : TestActivity() {
-    override fun attachBaseContext(newBase: Context?) {
-        super.attachBaseContext(newBase)
-        SplitCompat.install(this)
-    }
 }

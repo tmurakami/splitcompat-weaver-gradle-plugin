@@ -30,7 +30,7 @@ import java.io.StringWriter
 
 class ActionTest {
     @[Rule JvmField]
-    val folder = TemporaryFolder()
+    val folder: TemporaryFolder = TemporaryFolder()
 
     @Test
     fun copy() {

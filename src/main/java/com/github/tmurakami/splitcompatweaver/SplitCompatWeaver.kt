@@ -53,8 +53,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     ): MethodVisitor {
         val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
         return if (isWoven ||
-            name != ATTACH_BASE_CONTEXT ||
-            descriptor != ATTACH_BASE_CONTEXT_DESCRIPTOR
+            name != METHOD_ATTACH_BASE_CONTEXT ||
+            descriptor != DESCRIPTOR_ATTACH_BASE_CONTEXT
         ) mv else SplitCompatInstallAdder(mv).also { isWoven = true }
     }
 
@@ -62,8 +62,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         if (!isWoven) {
             super.visitMethod(
                 ACC_PROTECTED,
-                ATTACH_BASE_CONTEXT,
-                ATTACH_BASE_CONTEXT_DESCRIPTOR,
+                METHOD_ATTACH_BASE_CONTEXT,
+                DESCRIPTOR_ATTACH_BASE_CONTEXT,
                 null,
                 null
             ).run {
@@ -73,8 +73,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
                 visitMethodInsn(
                     INVOKESPECIAL,
                     superName,
-                    ATTACH_BASE_CONTEXT,
-                    ATTACH_BASE_CONTEXT_DESCRIPTOR,
+                    METHOD_ATTACH_BASE_CONTEXT,
+                    DESCRIPTOR_ATTACH_BASE_CONTEXT,
                     false
                 )
                 visitSplitCompatInstallCall()
@@ -88,7 +88,7 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
 
     private fun MethodVisitor.visitSplitCompatInstallCall() {
         visitVarInsn(ALOAD, 0)
-        visitMethodInsn(INVOKESTATIC, SPLIT_COMPAT, INSTALL, INSTALL_DESCRIPTOR, false)
+        visitMethodInsn(INVOKESTATIC, CLASS_SPLIT_COMPAT, METHOD_INSTALL, DESCRIPTOR_INSTALL, false)
         visitInsn(POP)
     }
 
@@ -104,8 +104,8 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
             if (opcode == INVOKESPECIAL &&
                 owner == superName &&
-                name == ATTACH_BASE_CONTEXT &&
-                descriptor == ATTACH_BASE_CONTEXT_DESCRIPTOR
+                name == METHOD_ATTACH_BASE_CONTEXT &&
+                descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
             ) {
                 mv.visitSplitCompatInstallCall()
             }
@@ -117,10 +117,12 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
     }
 
     private companion object {
-        private const val ATTACH_BASE_CONTEXT = "attachBaseContext"
-        private const val ATTACH_BASE_CONTEXT_DESCRIPTOR = "(Landroid/content/Context;)V"
-        private const val SPLIT_COMPAT = "com/google/android/play/core/splitcompat/SplitCompat"
-        private const val INSTALL = "install"
-        private const val INSTALL_DESCRIPTOR = "(Landroid/content/Context;)Z"
+        private const val CLASS_CONTEXT = "android/content/Context"
+        private const val METHOD_ATTACH_BASE_CONTEXT = "attachBaseContext"
+        private const val DESCRIPTOR_ATTACH_BASE_CONTEXT = "(L$CLASS_CONTEXT;)V"
+        private const val CLASS_SPLIT_COMPAT =
+            "com/google/android/play/core/splitcompat/SplitCompat"
+        private const val METHOD_INSTALL = "install"
+        private const val DESCRIPTOR_INSTALL = "(L$CLASS_CONTEXT;)Z"
     }
 }
