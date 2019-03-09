@@ -42,9 +42,9 @@ internal class ComponentNameCollector(
                 require(!name.startsWith("\${")) {
                     "The 'android:name' must not be a variable: $manifest"
                 }
-                val cls = if (name[0] == '.') packageName + name else name
-                names += cls.replace('.', '/')
-                LOGGER.run { if (isDebugEnabled) debug("Target $qName: $cls") }
+                val className = if (name[0] == '.') packageName + name else name
+                names += className
+                LOGGER.run { if (isDebugEnabled) debug("Target $qName: $className") }
             }
         }
     }

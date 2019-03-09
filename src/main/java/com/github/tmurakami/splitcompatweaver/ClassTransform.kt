@@ -38,7 +38,7 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
 
     override fun transform(invocation: TransformInvocation) {
         super.transform(invocation)
-        val names = collectComponentNamesFor(invocation.context.variantName)
+        val classes = collectComponentClassesFor(invocation.context.variantName)
         val incremental = invocation.isIncremental
         val outputDir = invocation.outputProvider
             .apply { if (!incremental) deleteAll() }
@@ -58,14 +58,14 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
                 val path = src.toRelativeString(baseDir)
                 when (status) {
                     ADDED,
-                    CHANGED -> if (path.removeSuffix(".class") in names) Weave(src) else Copy(src)
+                    CHANGED -> if (path in classes) Weave(src) else Copy(src)
                     NOTCHANGED -> Nop
                     REMOVED -> Delete
                 }.invoke(outputDir.resolve(path))
             }
     }
 
-    private fun collectComponentNamesFor(variantName: String): Set<String> {
+    private fun collectComponentClassesFor(variantName: String): Set<String> {
         val mf = extension.applicationVariants.single { it.name == variantName }
             .outputs.single()
             .processManifestProvider.get()
@@ -73,7 +73,9 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
             .walk().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
         val parser = SAXParserFactory.newInstance().newSAXParser()
-        return mutableSetOf<String>().also { parser.parse(mf, ComponentNameCollector(mf, it)) }
+        return mutableSetOf<String>().also {
+            parser.parse(mf, ComponentNameCollector(mf, it))
+        }.asSequence().map { it.replace('.', '/') + ".class" }.toHashSet()
     }
 
     private companion object {

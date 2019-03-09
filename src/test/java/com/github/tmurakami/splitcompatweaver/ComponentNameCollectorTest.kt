@@ -34,7 +34,7 @@ class ComponentNameCollectorTest {
         val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(File(""), names)
         MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
-        assertThat(names).containsExactly("a/b/A1", "x/y/A2", "a/b/S1", "x/y/z/S2")
+        assertThat(names).containsExactly("a.b.A1", "x.y.A2", "a.b.S1", "x.y.z.S2")
     }
 
     @Test
