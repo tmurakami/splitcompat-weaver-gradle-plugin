@@ -36,7 +36,7 @@ class SplitCompatWeaverTest {
     @Theory
     fun test(testData: TestData) {
         testData.let { (activityClass, installCalls) ->
-            val activity = activityClass.create()
+            val activity = activityClass.createSplitCompatWovenActivity()
             mockkStatic(SplitCompat::class)
             try {
                 every { SplitCompat.install(activity) } returns true
@@ -49,7 +49,7 @@ class SplitCompatWeaverTest {
         }
     }
 
-    private fun KClass<out TestActivity>.create(): TestActivity {
+    private fun KClass<out TestActivity>.createSplitCompatWovenActivity(): TestActivity {
         val cls = java
         val activity = cls.name
         val bytecode = cls.getResourceAsStream("/${activity.replace('.', '/')}.class").use {
