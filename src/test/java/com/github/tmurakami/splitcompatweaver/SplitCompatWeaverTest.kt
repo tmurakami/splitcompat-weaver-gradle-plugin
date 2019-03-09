@@ -67,7 +67,7 @@ class SplitCompatWeaverTest {
 
     companion object {
         @[DataPoints JvmField]
-        val TEST_DATA: Array<KClass<out TestActivity>> =
+        val ACTIVITY_CLASSES: Array<KClass<out TestActivity>> =
             arrayOf(TestActivity1::class, TestActivity2::class)
     }
 }

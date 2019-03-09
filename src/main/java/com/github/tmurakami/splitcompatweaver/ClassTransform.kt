@@ -57,8 +57,7 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
                 LOGGER.run { if (isDebugEnabled) debug("${status.name}: $src") }
                 val path = src.toRelativeString(baseDir)
                 when (status) {
-                    ADDED,
-                    CHANGED -> if (path in classes) Weave(src) else Copy(src)
+                    ADDED, CHANGED -> if (path in classes) Weave(src) else Copy(src)
                     NOTCHANGED -> Nop
                     REMOVED -> Delete
                 }.invoke(outputDir.resolve(path))
