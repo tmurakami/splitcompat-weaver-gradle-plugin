@@ -21,12 +21,12 @@ import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
 import java.io.File
 
-internal sealed class Action {
-    abstract operator fun invoke(target: File)
-}
+internal sealed class Action : Runnable
 
-internal class Copy(private val source: File) : Action() {
-    override fun invoke(target: File) {
+internal class Copy(private val source: File, private val target: File) : Action() {
+    override fun run() {
+        val source = source
+        val target = target
         source.copyTo(target, true)
         LOGGER.run { if (isDebugEnabled) debug("Copied $source to $target") }
     }
@@ -36,20 +36,23 @@ internal class Copy(private val source: File) : Action() {
     }
 }
 
-internal object Delete : Action() {
-    private val LOGGER = Logging.getLogger(Delete::class.java)
-    override fun invoke(target: File) {
-        target.delete()
-        LOGGER.run { if (isDebugEnabled) debug("Deleted $target") }
+internal class Delete(private val target: File) : Action() {
+    override fun run() = target.let {
+        it.delete()
+        LOGGER.run { if (isDebugEnabled) debug("Deleted $it") }
+    }
+
+    private companion object {
+        private val LOGGER = Logging.getLogger(Delete::class.java)
     }
 }
 
 internal object Nop : Action() {
-    override fun invoke(target: File) = Unit
+    override fun run() = Unit
 }
 
-internal class Weave(private val source: File) : Action() {
-    override fun invoke(target: File) = target.run {
+internal class Weave(private val source: File, private val target: File) : Action() {
+    override fun run() = target.run {
         parentFile.run {
             check(isDirectory || mkdirs()) { "Cannot make directory: $this" }
         }

@@ -35,7 +35,7 @@ class ActionTest {
     @Test
     fun copy() {
         val target = folder.newFile()
-        Copy(SOURCE)(target)
+        Copy(SOURCE, target).run()
         assertThat(target.readBytes()).isEqualTo(SOURCE.readBytes())
     }
 
@@ -43,7 +43,7 @@ class ActionTest {
     fun delete() {
         val target = folder.newFile()
         assertThat(target.exists()).isTrue()
-        Delete(target)
+        Delete(target).run()
         assertThat(target.exists()).isFalse()
     }
 
@@ -55,7 +55,7 @@ class ActionTest {
             StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
         }.toString()).doesNotContain(install)
         val target = folder.newFile()
-        Weave(SOURCE)(target)
+        Weave(SOURCE, target).run()
         assertThat(target.inputStream().use { i ->
             StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
         }.toString()).contains(install)

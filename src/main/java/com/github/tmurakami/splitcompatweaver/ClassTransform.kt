@@ -17,16 +17,15 @@
 package com.github.tmurakami.splitcompatweaver
 
 import com.android.SdkConstants
+import com.android.build.api.transform.Context
 import com.android.build.api.transform.Format.DIRECTORY
 import com.android.build.api.transform.QualifiedContent
 import com.android.build.api.transform.Status.ADDED
-import com.android.build.api.transform.Status.CHANGED
-import com.android.build.api.transform.Status.NOTCHANGED
-import com.android.build.api.transform.Status.REMOVED
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInvocation
 import com.android.build.gradle.AppExtension
 import org.gradle.api.logging.Logging
+import java.util.AbstractMap
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
@@ -38,42 +37,34 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
 
     override fun transform(invocation: TransformInvocation) {
         super.transform(invocation)
-        val classes = collectComponentClassesFor(invocation.context.variantName)
         val incremental = invocation.isIncremental
         val outputDir = invocation.outputProvider
             .apply { if (!incremental) deleteAll() }
             .getContentLocation(name, inputTypes, scopes, DIRECTORY)
+        val actionMapperFactory =
+            ActionMapperFactory(outputDir, collectComponentClasses(invocation.context))
         invocation.inputs.asSequence()
             .flatMap { it.directoryInputs.asSequence() }
             .flatMap { input ->
-                input.run {
-                    if (incremental) {
-                        changedFiles.asSequence().map { Triple(file, it.key, it.value!!) }
-                    } else {
-                        file.run { walk().filter { it.isFile }.map { Triple(this, it, ADDED) } }
-                    }
-                }
-            }.forEach { (baseDir, src, status) ->
-                LOGGER.run { if (isDebugEnabled) debug("${status.name}: $src") }
-                val path = src.toRelativeString(baseDir)
-                when (status) {
-                    ADDED, CHANGED -> if (path in classes) Weave(src) else Copy(src)
-                    NOTCHANGED -> Nop
-                    REMOVED -> Delete
-                }.invoke(outputDir.resolve(path))
-            }
+                val rootDir = input.file
+                val mapToAction = actionMapperFactory.createMapper(rootDir)
+                if (incremental) {
+                    input.changedFiles.asSequence()
+                } else {
+                    rootDir.walk().filter { it.isFile }.map { AbstractMap.SimpleEntry(it, ADDED) }
+                }.map(mapToAction::invoke)
+            }.forEach(Action::run)
     }
 
-    private fun collectComponentClassesFor(variantName: String): Set<String> {
-        val mf = extension.applicationVariants.single { it.name == variantName }
+    private fun collectComponentClasses(context: Context): Set<String> {
+        val mf = extension.applicationVariants.single { it.name == context.variantName }
             .outputs.single()
             .processManifestProvider.get()
             .metadataFeatureManifestOutputDirectory
             .walk().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
-        val parser = SAXParserFactory.newInstance().newSAXParser()
         return mutableSetOf<String>().also {
-            parser.parse(mf, ComponentNameCollector(mf, it))
+            SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(mf, it))
         }.asSequence().map { it.replace('.', '/') + ".class" }.toHashSet()
     }
 
