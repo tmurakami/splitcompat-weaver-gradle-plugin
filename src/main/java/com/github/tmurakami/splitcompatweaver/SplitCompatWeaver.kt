@@ -20,16 +20,15 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ACC_PROTECTED
 import org.objectweb.asm.Opcodes.ALOAD
-import org.objectweb.asm.Opcodes.ASM6
 import org.objectweb.asm.Opcodes.INVOKESPECIAL
 import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.RETURN
 
-internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
+internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api, cv) {
     private lateinit var name: String
     private var superName: String? = null
-    private var isWoven = false
+    private var splitCompatInstallAdded = false
 
     override fun visit(
         version: Int,
@@ -39,9 +38,9 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         superName: String?,
         interfaces: Array<out String>?
     ) {
+        super.visit(version, access, name, signature, superName, interfaces)
         this.name = name
         this.superName = superName
-        super.visit(version, access, name, signature, superName, interfaces)
     }
 
     override fun visitMethod(
@@ -52,14 +51,14 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         exceptions: Array<out String>?
     ): MethodVisitor {
         val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return if (isWoven ||
-            name != METHOD_ATTACH_BASE_CONTEXT ||
-            descriptor != DESCRIPTOR_ATTACH_BASE_CONTEXT
-        ) mv else SplitCompatInstallAdder(mv).also { isWoven = true }
+        return if (!splitCompatInstallAdded &&
+            name == METHOD_ATTACH_BASE_CONTEXT &&
+            descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
+        ) SplitCompatInstallAdder(mv) else mv
     }
 
     override fun visitEnd() {
-        if (!isWoven) {
+        if (!splitCompatInstallAdded) {
             super.visitMethod(
                 ACC_PROTECTED,
                 METHOD_ATTACH_BASE_CONTEXT,
@@ -90,6 +89,7 @@ internal class SplitCompatWeaver(cv: ClassVisitor) : ClassVisitor(ASM6, cv) {
         visitVarInsn(ALOAD, 0)
         visitMethodInsn(INVOKESTATIC, CLASS_SPLIT_COMPAT, METHOD_INSTALL, DESCRIPTOR_INSTALL, false)
         visitInsn(POP)
+        splitCompatInstallAdded = true
     }
 
     private inner class SplitCompatInstallAdder(mv: MethodVisitor) :

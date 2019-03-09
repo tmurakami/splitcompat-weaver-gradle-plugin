@@ -23,7 +23,7 @@ import java.io.File
 
 internal class ComponentNameCollector(
     private val manifest: File,
-    private val names: MutableSet<String>
+    private val internalNames: MutableSet<String>
 ) : DefaultHandler() {
     private lateinit var packageName: String
 
@@ -42,7 +42,7 @@ internal class ComponentNameCollector(
                     "The 'android:name' must not be a variable: $manifest"
                 }
                 val className = if (name[0] == '.') packageName + name else name
-                names += className
+                internalNames += className.replace('.', '/')
                 LOGGER.run { if (isDebugEnabled) debug("Target $qName: $className") }
             }
         }

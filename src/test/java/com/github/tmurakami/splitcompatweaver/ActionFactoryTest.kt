@@ -27,33 +27,27 @@ import org.junit.experimental.theories.Theories
 import org.junit.experimental.theories.Theory
 import org.junit.runner.RunWith
 import java.io.File
-import java.util.AbstractMap
 import kotlin.reflect.KClass
 
 @RunWith(Theories::class)
-class ActionMapperTest {
+class ActionFactoryTest {
+    private val actionFactory = ActionFactory(emptySet())
+
     @Theory
-    fun test(testData: Triple<Status, String, KClass<*>>) =
-        testData.let { (status, classFile, actionClass) ->
-            val rootDir = File("/")
-            val outputDir = File("")
-            val componentClasses = setOf(TARGET_COMPONENT_CLASS)
-            val mapToAction = ActionMapperFactory(outputDir, componentClasses).createMapper(rootDir)
-            val action = mapToAction(AbstractMap.SimpleEntry(File("/$classFile"), status))
+    fun createClassAction(testData: Pair<Status, KClass<*>>) =
+        testData.let { (status, actionClass) ->
+            val file = File("")
+            val action = actionFactory.createClassAction(file, status, file)
             assertThat(action).isInstanceOf(actionClass.java)
         }
 
     companion object {
-        private const val TARGET_COMPONENT_CLASS = "Foo.class"
         @[DataPoints JvmField]
-        val TEST_DATA: Array<Triple<Status, String, KClass<*>>> =
-            arrayOf(
-                Triple(ADDED, TARGET_COMPONENT_CLASS, Weave::class),
-                Triple(ADDED, "Bar.class", Copy::class),
-                Triple(CHANGED, TARGET_COMPONENT_CLASS, Weave::class),
-                Triple(CHANGED, "Bar.class", Copy::class),
-                Triple(REMOVED, "Foo.class", Delete::class),
-                Triple(NOTCHANGED, "Foo.class", Nop::class)
-            )
+        val MAPPING: Array<Pair<Status, KClass<*>>> = arrayOf(
+            ADDED to ReplaceClassAction::class,
+            CHANGED to ReplaceClassAction::class,
+            REMOVED to DeleteAction::class,
+            NOTCHANGED to NopAction::class
+        )
     }
 }

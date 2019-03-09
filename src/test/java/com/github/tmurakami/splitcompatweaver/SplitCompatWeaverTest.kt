@@ -28,13 +28,14 @@ import org.junit.experimental.theories.Theory
 import org.junit.runner.RunWith
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.Opcodes.ASM6
 import org.objenesis.ObjenesisStd
 import kotlin.reflect.KClass
 
 @RunWith(Theories::class)
 class SplitCompatWeaverTest {
     @Theory
-    fun test(activityClass: KClass<out TestActivity>) {
+    fun weaveSplitCompat(activityClass: KClass<out TestActivity>) {
         val activity = activityClass.createSplitCompatWovenActivity()
         mockkStatic(SplitCompat::class)
         try {
@@ -52,7 +53,7 @@ class SplitCompatWeaverTest {
         val activity = cls.name
         val bytecode = cls.getResourceAsStream("/${activity.replace('.', '/')}.class").use {
             val cr = ClassReader(it)
-            ClassWriter(cr, 0).apply { cr.accept(SplitCompatWeaver(this), 0) }.toByteArray()
+            ClassWriter(cr, 0).apply { cr.accept(SplitCompatWeaver(ASM6, this), 0) }.toByteArray()
         }
         val classLoader = object : ClassLoader(cls.classLoader) {
             override fun loadClass(name: String, resolve: Boolean): Class<*> =
@@ -67,7 +68,9 @@ class SplitCompatWeaverTest {
 
     companion object {
         @[DataPoints JvmField]
-        val ACTIVITY_CLASSES: Array<KClass<out TestActivity>> =
-            arrayOf(TestActivity1::class, TestActivity2::class)
+        val ACTIVITY_CLASSES: Array<KClass<out TestActivity>> = arrayOf(
+            TestActivity1::class,
+            TestActivity2::class
+        )
     }
 }

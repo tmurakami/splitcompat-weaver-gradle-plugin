@@ -17,61 +17,67 @@
 package com.github.tmurakami.splitcompatweaver
 
 import com.android.SdkConstants
-import com.android.build.api.transform.Context
+import com.android.build.api.transform.Format
 import com.android.build.api.transform.Format.DIRECTORY
 import com.android.build.api.transform.QualifiedContent
+import com.android.build.api.transform.QualifiedContent.DefaultContentType.CLASSES
+import com.android.build.api.transform.QualifiedContent.Scope.PROJECT
 import com.android.build.api.transform.Status.ADDED
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInvocation
+import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.AppExtension
 import org.gradle.api.logging.Logging
-import java.util.AbstractMap
+import java.io.File
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
 internal class ClassTransform(private val extension: AppExtension) : Transform() {
+    override fun getName(): String = "splitCompatWeaver"
+    override fun getInputTypes(): Set<QualifiedContent.ContentType> = EnumSet.of(CLASSES)
+    override fun getScopes(): MutableSet<QualifiedContent.Scope> = EnumSet.of(PROJECT)
     override fun isIncremental(): Boolean = true
-    override fun getName(): String = NAME
-    override fun getScopes(): MutableSet<QualifiedContent.Scope> = SCOPES
-    override fun getInputTypes(): Set<QualifiedContent.ContentType> = INPUT_TYPES
 
     override fun transform(invocation: TransformInvocation) {
         super.transform(invocation)
         val incremental = invocation.isIncremental
-        val outputDir = invocation.outputProvider
-            .apply { if (!incremental) deleteAll() }
-            .getContentLocation(name, inputTypes, scopes, DIRECTORY)
-        val actionMapperFactory =
-            ActionMapperFactory(outputDir, collectComponentClasses(invocation.context))
+        val outputProvider = invocation.outputProvider.apply { if (!incremental) deleteAll() }
+        val candidates = collectComponentNamesFor(invocation.context.variantName)
+        val actionFactory = ActionFactory(candidates)
         invocation.inputs.asSequence()
             .flatMap { it.directoryInputs.asSequence() }
             .flatMap { input ->
-                val rootDir = input.file
-                val mapToAction = actionMapperFactory.createMapper(rootDir)
+                val inDir = input.file
+                val outDir = outputProvider.getContentLocation(input, DIRECTORY)
                 if (incremental) {
-                    input.changedFiles.asSequence()
+                    input.changedFiles.asSequence().map { it.toPair() }
                 } else {
-                    rootDir.walk().filter { it.isFile }.map { AbstractMap.SimpleEntry(it, ADDED) }
-                }.map(mapToAction::invoke)
-            }.forEach(Action::run)
+                    inDir.walkBottomUp().filter { it.isFile }.map { it to ADDED }
+                }.filter { it.first.name.endsWith(".class") }.map { (f, s) ->
+                    actionFactory.createClassAction(f, s, outDir.resolve(f.relativeTo(inDir)))
+                }
+            }
+            .forEach(Action::run)
     }
 
-    private fun collectComponentClasses(context: Context): Set<String> {
-        val mf = extension.applicationVariants.single { it.name == context.variantName }
+    private fun collectComponentNamesFor(variantName: String): Set<String> {
+        val mf = extension.applicationVariants.single { it.name == variantName }
             .outputs.single()
             .processManifestProvider.get()
             .metadataFeatureManifestOutputDirectory
-            .walk().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
+            .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
         return mutableSetOf<String>().also {
             SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(mf, it))
-        }.asSequence().map { it.replace('.', '/') + ".class" }.toHashSet()
+        }
     }
+
+    private fun TransformOutputProvider.getContentLocation(
+        content: QualifiedContent,
+        format: Format
+    ): File = content.run { getContentLocation(file.path, contentTypes, scopes, format) }
 
     private companion object {
         private val LOGGER = Logging.getLogger(ClassTransform::class.java)
-        private const val NAME = "splitCompatWeaver"
-        private val SCOPES = EnumSet.of(QualifiedContent.Scope.PROJECT)
-        private val INPUT_TYPES = EnumSet.of(QualifiedContent.DefaultContentType.CLASSES)
     }
 }

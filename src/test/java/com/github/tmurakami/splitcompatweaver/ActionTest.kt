@@ -23,6 +23,7 @@ import org.junit.rules.TemporaryFolder
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.ClassReader.SKIP_DEBUG
 import org.objectweb.asm.ClassReader.SKIP_FRAMES
+import org.objectweb.asm.Type
 import org.objectweb.asm.util.TraceClassVisitor
 import java.io.File
 import java.io.PrintWriter
@@ -33,36 +34,39 @@ class ActionTest {
     val folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun copy() {
-        val target = folder.newFile()
-        Copy(SOURCE, target).run()
-        assertThat(target.readBytes()).isEqualTo(SOURCE.readBytes())
-    }
-
-    @Test
-    fun delete() {
+    fun deleteAction() {
         val target = folder.newFile()
         assertThat(target.exists()).isTrue()
-        Delete(target).run()
+        DeleteAction(target).run()
         assertThat(target.exists()).isFalse()
     }
 
     @Test
-    fun weave() {
-        val install = "com/google/android/play/core/splitcompat/SplitCompat.install"
-        val flags = SKIP_DEBUG or SKIP_FRAMES
-        assertThat(SOURCE.inputStream().use { i ->
-            StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
-        }.toString()).doesNotContain(install)
+    fun replaceClassAction_weave() {
+        assertThat(SOURCE.dumpClass()).doesNotContain(METHOD_INSTALL)
         val target = folder.newFile()
-        Weave(SOURCE, target).run()
-        assertThat(target.inputStream().use { i ->
-            StringWriter().also { ClassReader(i).accept(TraceClassVisitor(PrintWriter(it)), flags) }
-        }.toString()).contains(install)
+        ReplaceClassAction(SOURCE, target, setOf(INTERNAL_NAME)).run()
+        assertThat(target.dumpClass()).contains(METHOD_INSTALL)
+    }
+
+    @Test
+    fun replaceClassAction_copy() {
+        val target = folder.newFile()
+        ReplaceClassAction(SOURCE, target, emptySet()).run()
+        assertThat(target.readBytes()).isEqualTo(SOURCE.readBytes())
+    }
+
+    private fun File.dumpClass(): String {
+        val writer = StringWriter()
+        val cr = ClassReader(readBytes())
+        cr.accept(TraceClassVisitor(PrintWriter(writer)), SKIP_DEBUG or SKIP_FRAMES)
+        return writer.toString()
     }
 
     private companion object {
-        private val PATH = "/${TestActivity1::class.java.name.replace('.', '/')}.class"
-        private val SOURCE = File(ActionTest::class.java.getResource(PATH).path)
+        private const val METHOD_INSTALL =
+            "com/google/android/play/core/splitcompat/SplitCompat.install"
+        private val INTERNAL_NAME = Type.getInternalName(TestActivity1::class.java)
+        private val SOURCE = File(ActionTest::class.java.getResource("/$INTERNAL_NAME.class").path)
     }
 }
