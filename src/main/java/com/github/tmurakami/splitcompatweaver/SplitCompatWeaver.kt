@@ -16,6 +16,7 @@
 
 package com.github.tmurakami.splitcompatweaver
 
+import org.gradle.api.logging.Logging
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes.ACC_PROTECTED
@@ -90,6 +91,10 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
         visitMethodInsn(INVOKESTATIC, CLASS_SPLIT_COMPAT, METHOD_INSTALL, DESCRIPTOR_INSTALL, false)
         visitInsn(POP)
         splitCompatInstallAdded = true
+        val logger = LOGGER
+        if (logger.isDebugEnabled) {
+            logger.debug("Wove 'SplitCompat#$METHOD_INSTALL' into ${name.replace('/', '.')}")
+        }
     }
 
     private inner class SplitCompatInstallAdder(mv: MethodVisitor) :
@@ -117,6 +122,7 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
     }
 
     private companion object {
+        private val LOGGER = Logging.getLogger(SplitCompatWeaver::class.java)
         private const val CLASS_CONTEXT = "android/content/Context"
         private const val METHOD_ATTACH_BASE_CONTEXT = "attachBaseContext"
         private const val DESCRIPTOR_ATTACH_BASE_CONTEXT = "(L$CLASS_CONTEXT;)V"
