@@ -27,7 +27,6 @@ group = 'com.github.tmurakami'
 repositories {
     google()
     mavenCentral()
-    jcenter()
 }
 
 configurations {
@@ -37,7 +36,7 @@ configurations {
 dependencies {
     def asmVersion = '6.0'
     def buildToolsVersion = '3.3.0'
-    ktlint 'com.github.shyiko:ktlint:0.30.0'
+    ktlint 'com.github.shyiko:ktlint:0.31.0'
     implementation gradleApi()
     implementation 'org.jetbrains.kotlin:kotlin-stdlib-jdk8'
     implementation "org.ow2.asm:asm:$asmVersion"
@@ -45,7 +44,7 @@ dependencies {
     implementation("com.android.tools.build:gradle:$buildToolsVersion") { transitive = false }
     testImplementation 'junit:junit:4.12'
     testImplementation 'com.google.truth:truth:0.43'
-    testImplementation 'io.mockk:mockk:1.9.1'
+    testImplementation 'io.mockk:mockk:1.9.2'
     testImplementation 'org.jetbrains.kotlin:kotlin-reflect'
     testImplementation 'com.google.android:android:4.1.1.4'
     testImplementation 'org.objenesis:objenesis:3.0.1'
