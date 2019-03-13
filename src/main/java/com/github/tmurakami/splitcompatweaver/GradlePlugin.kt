@@ -28,9 +28,13 @@ internal class GradlePlugin : Plugin<Project> {
         extensions.findByType(AppExtension::class.java)!!.run {
             registerTransform(ClassTransform(this))
         }
+        configurations.matching { it.name == "implementation" }.all {
+            it.dependencies += dependencies.create(DEPENDENCY_PLAY_CORE)
+        }
     }
 
     private companion object {
         private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
+        private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.4.0"
     }
 }
