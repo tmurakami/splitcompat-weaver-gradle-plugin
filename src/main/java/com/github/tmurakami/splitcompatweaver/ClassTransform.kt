@@ -61,11 +61,13 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
     }
 
     private fun collectComponentNamesFor(variantName: String): Set<String> {
-        val mf = extension.applicationVariants.single { it.name == variantName }
-            .outputs.single()
-            .processManifestProvider.get()
-            .metadataFeatureManifestOutputDirectory
-            .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
+        LOGGER.run { if (isDebugEnabled) debug("variant: $variantName") }
+        val mf = extension.applicationVariants.find { it.name == variantName }?.run {
+            outputs.single()
+                .processManifestProvider.get()
+                .metadataFeatureManifestOutputDirectory
+                .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
+        } ?: return emptySet()
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
         return hashSetOf<String>().also {
             SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(it, mf))
