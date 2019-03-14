@@ -26,13 +26,13 @@ import com.android.build.api.transform.Status.ADDED
 import com.android.build.api.transform.Transform
 import com.android.build.api.transform.TransformInvocation
 import com.android.build.api.transform.TransformOutputProvider
-import com.android.build.gradle.AppExtension
+import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.logging.Logging
 import java.io.File
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
-internal class ClassTransform(private val extension: AppExtension) : Transform() {
+internal class ClassTransform(private val variants: Set<BaseVariant>) : Transform() {
     override fun getName(): String = "splitCompatWeaver"
     override fun getInputTypes(): Set<QualifiedContent.ContentType> = EnumSet.of(CLASSES)
     override fun getScopes(): MutableSet<QualifiedContent.Scope> = EnumSet.of(PROJECT)
@@ -62,12 +62,11 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
 
     private fun collectComponentNamesFor(variantName: String): Set<String> {
         LOGGER.run { if (isDebugEnabled) debug("variant: $variantName") }
-        val mf = extension.applicationVariants.find { it.name == variantName }?.run {
-            outputs.single()
-                .processManifestProvider.get()
-                .metadataFeatureManifestOutputDirectory
-                .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
-        } ?: return emptySet()
+        val mf = (variants.find { it.name == variantName } ?: return emptySet())
+            .outputs.single()
+            .processManifestProvider.get()
+            .metadataFeatureManifestOutputDirectory
+            .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
         return hashSetOf<String>().also {
             SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(it, mf))

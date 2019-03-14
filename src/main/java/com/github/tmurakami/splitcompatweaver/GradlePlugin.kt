@@ -26,7 +26,7 @@ internal class GradlePlugin : Plugin<Project> {
             "Missing '$DYNAMIC_FEATURE' plugin"
         }
         extensions.findByType(AppExtension::class.java)!!.run {
-            registerTransform(ClassTransform(this))
+            registerTransform(ClassTransform(applicationVariants))
         }
         configurations.matching { it.name == "implementation" }.all {
             it.dependencies += dependencies.create(DEPENDENCY_PLAY_CORE)

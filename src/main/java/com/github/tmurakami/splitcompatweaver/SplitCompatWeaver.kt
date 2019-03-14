@@ -29,7 +29,7 @@ import org.objectweb.asm.Opcodes.RETURN
 internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api, cv) {
     private lateinit var name: String
     private var superName: String? = null
-    private var splitCompatInstallAdded = false
+    private var splitCompatInstallWoven = false
 
     override fun visit(
         version: Int,
@@ -52,14 +52,29 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
         exceptions: Array<out String>?
     ): MethodVisitor {
         val mv = super.visitMethod(access, name, descriptor, signature, exceptions)
-        return if (!splitCompatInstallAdded &&
+        return if (!splitCompatInstallWoven &&
             name == METHOD_ATTACH_BASE_CONTEXT &&
             descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
-        ) SplitCompatInstallAdder(mv) else mv
+        ) object : MethodVisitor(api, mv) {
+            override fun visitMethodInsn(
+                opcode: Int,
+                owner: String,
+                name: String,
+                descriptor: String,
+                isInterface: Boolean
+            ) {
+                super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
+                if (opcode == INVOKESPECIAL &&
+                    owner == superName &&
+                    name == METHOD_ATTACH_BASE_CONTEXT &&
+                    descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
+                ) mv.visitSplitCompatInstallCall()
+            }
+        } else mv
     }
 
     override fun visitEnd() {
-        if (!splitCompatInstallAdded) {
+        if (!splitCompatInstallWoven) {
             super.visitMethod(
                 ACC_PROTECTED,
                 METHOD_ATTACH_BASE_CONTEXT,
@@ -79,7 +94,7 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
                 )
                 visitSplitCompatInstallCall()
                 visitInsn(RETURN)
-                visitMaxs(2, 4)
+                visitMaxs(2, 2)
                 visitEnd()
             }
         }
@@ -90,34 +105,11 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
         visitVarInsn(ALOAD, 0)
         visitMethodInsn(INVOKESTATIC, CLASS_SPLIT_COMPAT, METHOD_INSTALL, DESCRIPTOR_INSTALL, false)
         visitInsn(POP)
-        splitCompatInstallAdded = true
-        val logger = LOGGER
-        if (logger.isDebugEnabled) {
-            logger.debug("Wove 'SplitCompat#$METHOD_INSTALL' into ${name.replace('/', '.')}")
-        }
-    }
-
-    private inner class SplitCompatInstallAdder(mv: MethodVisitor) :
-        MethodVisitor(api, mv) {
-        override fun visitMethodInsn(
-            opcode: Int,
-            owner: String,
-            name: String,
-            descriptor: String,
-            isInterface: Boolean
-        ) {
-            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface)
-            if (opcode == INVOKESPECIAL &&
-                owner == superName &&
-                name == METHOD_ATTACH_BASE_CONTEXT &&
-                descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
-            ) {
-                mv.visitSplitCompatInstallCall()
+        splitCompatInstallWoven = true
+        LOGGER.run {
+            if (isDebugEnabled) {
+                debug("Wove 'SplitCompat#$METHOD_INSTALL' into ${name.replace('/', '.')}")
             }
-        }
-
-        override fun visitMaxs(maxStack: Int, maxLocals: Int) {
-            super.visitMaxs(maxStack, maxLocals + 2)
         }
     }
 
