@@ -67,8 +67,8 @@ internal class ClassTransform(private val extension: AppExtension) : Transform()
             .metadataFeatureManifestOutputDirectory
             .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
-        return mutableSetOf<String>().also {
-            SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(mf, it))
+        return hashSetOf<String>().also {
+            SAXParserFactory.newInstance().newSAXParser().parse(mf, ComponentNameCollector(it, mf))
         }
     }
 

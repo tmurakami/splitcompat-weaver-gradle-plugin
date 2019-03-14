@@ -30,9 +30,9 @@ class ComponentNameCollectorTest {
 
     @Test
     fun parseManifest() {
-        val internalNames = mutableSetOf<String>()
+        val internalNames = hashSetOf<String>()
         val parser = SAXParserFactory.newInstance().newSAXParser()
-        val collector = ComponentNameCollector(File(""), internalNames)
+        val collector = ComponentNameCollector(internalNames, File(""))
         MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
         assertThat(internalNames).containsExactly("a/b/A1", "x/y/A2", "a/b/S1", "x/y/z/S2")
     }
@@ -45,7 +45,7 @@ class ComponentNameCollectorTest {
             expectMessage("The 'android:name' must not be a variable: $path")
         }
         val parser = SAXParserFactory.newInstance().newSAXParser()
-        val collector = ComponentNameCollector(File(path), mutableSetOf())
+        val collector = ComponentNameCollector(hashSetOf(), File(path))
         INVALID_MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
     }
 

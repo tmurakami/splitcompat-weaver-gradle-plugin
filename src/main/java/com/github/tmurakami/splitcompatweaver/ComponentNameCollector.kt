@@ -22,8 +22,8 @@ import org.xml.sax.helpers.DefaultHandler
 import java.io.File
 
 internal class ComponentNameCollector(
-    private val manifest: File,
-    private val internalNames: MutableSet<String>
+    private val internalNames: MutableSet<String>,
+    private val manifest: File
 ) : DefaultHandler() {
     private lateinit var packageName: String
 

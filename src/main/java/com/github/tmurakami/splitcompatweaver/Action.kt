@@ -23,7 +23,7 @@ import org.objectweb.asm.ClassReader.SKIP_DEBUG
 import org.objectweb.asm.ClassReader.SKIP_FRAMES
 import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
-import org.objectweb.asm.Opcodes.ASM7
+import org.objectweb.asm.Opcodes.ASM6
 import java.io.File
 
 internal sealed class Action : Runnable
@@ -52,7 +52,7 @@ internal class ReplaceClassAction(
         val source = source
         val cr = ClassReader(source.readBytes())
         var needToWeave = false
-        cr.accept(object : ClassVisitor(ASM7) {
+        cr.accept(object : ClassVisitor(ASM6) {
             override fun visit(
                 version: Int,
                 access: Int,
@@ -71,7 +71,7 @@ internal class ReplaceClassAction(
                 check(isDirectory || mkdirs()) { "Cannot make directory: $this" }
             }
             val cw = ClassWriter(cr, 0)
-            cr.accept(SplitCompatWeaver(ASM7, cw), 0)
+            cr.accept(SplitCompatWeaver(ASM6, cw), 0)
             target.writeBytes(cw.toByteArray())
         } else {
             source.copyTo(target, overwrite = true)

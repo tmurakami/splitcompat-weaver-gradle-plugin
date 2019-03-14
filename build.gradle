@@ -1,14 +1,11 @@
 buildscript {
-    ext.versions = [asm    : '7.1',
-                    kotlin : '1.3.21',
+    ext.versions = [asm    : '6.0',
+                    kotlin : '1.3.11',
                     android: [gradle: '3.3.0',],]
     repositories {
         gradlePluginPortal()
-        google()
-        mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.2'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.21.0'
         classpath 'pl.allegro.tech.build:axion-release-plugin:1.10.0'
