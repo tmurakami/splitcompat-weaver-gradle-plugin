@@ -28,15 +28,14 @@ import com.android.build.api.transform.TransformInvocation
 import com.android.build.api.transform.TransformOutputProvider
 import com.android.build.gradle.api.BaseVariant
 import org.gradle.api.logging.Logging
-import java.io.File
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
 internal class ClassTransform(private val variants: Set<BaseVariant>) : Transform() {
-    override fun getName(): String = "splitCompatWeaver"
-    override fun getInputTypes(): Set<QualifiedContent.ContentType> = EnumSet.of(CLASSES)
-    override fun getScopes(): MutableSet<QualifiedContent.Scope> = EnumSet.of(PROJECT)
-    override fun isIncremental(): Boolean = true
+    override fun getName() = "splitCompatWeaver"
+    override fun getInputTypes() = EnumSet.of(CLASSES)!!
+    override fun getScopes() = EnumSet.of(PROJECT)!!
+    override fun isIncremental() = true
 
     override fun transform(invocation: TransformInvocation) {
         super.transform(invocation)
@@ -76,7 +75,7 @@ internal class ClassTransform(private val variants: Set<BaseVariant>) : Transfor
     private fun TransformOutputProvider.getContentLocation(
         content: QualifiedContent,
         format: Format
-    ): File = content.run { getContentLocation(file.path, contentTypes, scopes, format) }
+    ) = content.run { getContentLocation(file.path, contentTypes, scopes, format) }
 
     private companion object {
         private val LOGGER = Logging.getLogger(ClassTransform::class.java)
