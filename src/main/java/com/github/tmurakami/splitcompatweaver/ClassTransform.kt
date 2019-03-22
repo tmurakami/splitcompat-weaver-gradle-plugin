@@ -32,10 +32,10 @@ import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
 internal class ClassTransform(private val variants: Set<BaseVariant>) : Transform() {
-    override fun getName() = "splitCompatWeaver"
-    override fun getInputTypes() = EnumSet.of(CLASSES)!!
-    override fun getScopes() = EnumSet.of(PROJECT)!!
-    override fun isIncremental() = true
+    override fun getName(): String = "splitCompatWeaver"
+    override fun getInputTypes(): Set<QualifiedContent.ContentType> = EnumSet.of(CLASSES)
+    override fun getScopes(): MutableSet<QualifiedContent.Scope> = EnumSet.of(PROJECT)
+    override fun isIncremental(): Boolean = true
 
     override fun transform(invocation: TransformInvocation) {
         super.transform(invocation)
