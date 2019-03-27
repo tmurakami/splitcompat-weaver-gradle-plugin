@@ -34,7 +34,7 @@ class ActionTest {
     val folder: TemporaryFolder = TemporaryFolder()
 
     @Test
-    fun deleteAction() {
+    fun testDeleteAction() {
         val target = folder.newFile()
         assertThat(target.exists()).isTrue()
         DeleteAction(target).run()
@@ -42,7 +42,7 @@ class ActionTest {
     }
 
     @Test
-    fun replaceClassAction_weave() {
+    fun testReplaceClassAction_weave() {
         assertThat(SOURCE.dumpClass()).doesNotContain(METHOD_INSTALL)
         val target = folder.newFile()
         ReplaceClassAction(SOURCE, target, setOf(INTERNAL_NAME)).run()
@@ -50,7 +50,7 @@ class ActionTest {
     }
 
     @Test
-    fun replaceClassAction_copy() {
+    fun testReplaceClassAction_copy() {
         val target = folder.newFile()
         ReplaceClassAction(SOURCE, target, emptySet()).run()
         assertThat(target.readBytes()).isEqualTo(SOURCE.readBytes())

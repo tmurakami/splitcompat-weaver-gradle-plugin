@@ -35,7 +35,7 @@ import kotlin.reflect.KClass
 @RunWith(Theories::class)
 class SplitCompatWeaverTest {
     @Theory
-    fun weaveSplitCompat(activityClass: KClass<out TestActivity>) {
+    fun testWeaveSplitCompat(activityClass: KClass<out TestActivity>) {
         val activity = activityClass.createSplitCompatWovenActivity()
         mockkStatic(SplitCompat::class)
         try {

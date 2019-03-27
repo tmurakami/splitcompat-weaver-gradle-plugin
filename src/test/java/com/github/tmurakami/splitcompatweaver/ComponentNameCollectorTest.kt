@@ -29,7 +29,7 @@ class ComponentNameCollectorTest {
     val expectedException: ExpectedException = ExpectedException.none()!!
 
     @Test
-    fun parseManifest() {
+    fun testParseManifest() {
         val internalNames = hashSetOf<String>()
         val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(internalNames, File(""))
@@ -38,7 +38,7 @@ class ComponentNameCollectorTest {
     }
 
     @Test
-    fun parseInvalidManifest() {
+    fun testParseInvalidManifest() {
         val path = "/foo/bar/app/src/main/AndroidManifest.xml"
         expectedException.run {
             expect(IllegalArgumentException::class.java)

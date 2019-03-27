@@ -34,7 +34,7 @@ class ActionFactoryTest {
     private val actionFactory = ActionFactory(emptySet())
 
     @Theory
-    fun createClassAction(testData: Pair<Status, KClass<*>>) =
+    fun testCreateClassAction(testData: Pair<Status, KClass<*>>) =
         testData.let { (status, actionClass) ->
             val file = File("")
             val action = actionFactory.createClassAction(file, status, file)
