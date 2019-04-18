@@ -35,6 +35,6 @@ internal class GradlePlugin : Plugin<Project> {
 
     private companion object {
         private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
-        private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.4.0"
+        private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.4.1"
     }
 }
