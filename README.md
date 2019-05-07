@@ -6,6 +6,18 @@
 A Gradle plugin that weaves [`SplitCompat.install`](https://developer.android.com/reference/com/google/android/play/core/splitcompat/SplitCompat.html#install(android.content.Context)) into your
 Activities and Services.
 
+Applying this plugin, `SplitCompat.install` will be inserted after
+calling `super.attachBaseContext` in your Activities or Services, as
+shown below:
+
+```java
+@Override
+protected void attachBaseContext(Context newBase) {
+    super.attachBaseContext(newBase);
+    SplitCompat.install(this); // This line will be added by this plugin.
+}
+```
+
 ## Installation
 
 First, add the following into your root `build.gradle`:
