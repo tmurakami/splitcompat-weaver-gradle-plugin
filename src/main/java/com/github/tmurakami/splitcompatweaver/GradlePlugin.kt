@@ -21,15 +21,15 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 internal class GradlePlugin : Plugin<Project> {
-    override fun apply(target: Project) = target.run {
-        require(plugins.hasPlugin(DYNAMIC_FEATURE)) {
+    override fun apply(target: Project) {
+        require(target.plugins.hasPlugin(DYNAMIC_FEATURE)) {
             "Missing '$DYNAMIC_FEATURE' plugin"
         }
-        extensions.findByType(AppExtension::class.java)!!.run {
+        target.extensions.findByType(AppExtension::class.java)!!.run {
             registerTransform(ClassTransform(applicationVariants))
         }
-        configurations.matching { it.name == "implementation" }.all {
-            it.dependencies += dependencies.create(DEPENDENCY_PLAY_CORE)
+        target.configurations.getByName("implementation").defaultDependencies {
+            it += target.dependencies.create(DEPENDENCY_PLAY_CORE)
         }
     }
 
