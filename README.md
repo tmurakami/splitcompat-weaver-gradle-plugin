@@ -31,7 +31,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.0' // requires 3.4.0+
-        classpath 'com.github.tmurakami:splitcompat-weaver-gradle-plugin:0.1.0'
+        classpath 'com.github.tmurakami:splitcompat-weaver-gradle-plugin:0.2.0'
     }
 }
 ```
