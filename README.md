@@ -40,7 +40,7 @@ Next, add `com.google.android.play:core` artifact as an `api` scoped
 dependency into your base module's `build.gradle`:
 
 ```
-api 'com.google.android.play:core:1.4.1' // requires 1.4.1+
+api 'com.google.android.play:core:1.5.0' // requires 1.5.0+
 ```
 
 Finally, apply this plugin in your Dynamic Feature Module's `build.gradle`:
