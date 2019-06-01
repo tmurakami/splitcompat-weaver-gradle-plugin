@@ -39,7 +39,7 @@ buildscript {
 Next, add `com.google.android.play:core` artifact as an `api` scoped
 dependency into your base module's `build.gradle`:
 
-```
+```groovy
 api 'com.google.android.play:core:1.5.0' // requires 1.5.0+
 ```
 
