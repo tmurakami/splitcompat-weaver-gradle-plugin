@@ -49,7 +49,7 @@ dependencies {
     compileOnly "com.android.tools.build:gradle-api:${versions.android.gradle}"
     compileOnly("com.android.tools.build:gradle:${versions.android.gradle}") { transitive = false }
     testImplementation 'junit:junit:4.12'
-    testImplementation 'com.google.truth:truth:0.44'
+    testImplementation 'com.google.truth:truth:0.45'
     testImplementation 'io.mockk:mockk:1.9.3'
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
     testImplementation "com.android.tools.build:gradle-api:${versions.android.gradle}"
