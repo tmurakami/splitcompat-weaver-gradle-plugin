@@ -28,20 +28,20 @@ import java.io.File
 
 internal sealed class Action : Runnable
 
+private val LOGGER_DELETE_ACTION = Logging.getLogger(DeleteAction::class.java)
+
 internal class DeleteAction(private val target: File) : Action() {
     override fun run() = target.let {
         it.delete()
-        LOGGER.run { if (isDebugEnabled) debug("Deleted $it") }
-    }
-
-    private companion object {
-        private val LOGGER = Logging.getLogger(DeleteAction::class.java)
+        LOGGER_DELETE_ACTION.run { if (isDebugEnabled) debug("Deleted $it") }
     }
 }
 
 internal object NopAction : Action() {
     override fun run() = Unit
 }
+
+private val LOGGER_REPLACE_ACTION = Logging.getLogger(ReplaceClassAction::class.java)
 
 internal class ReplaceClassAction(
     private val source: File,
@@ -76,10 +76,6 @@ internal class ReplaceClassAction(
         } else {
             source.copyTo(target, overwrite = true)
         }
-        LOGGER.run { if (isDebugEnabled) debug("Replaced $target") }
-    }
-
-    private companion object {
-        private val LOGGER = Logging.getLogger(ReplaceClassAction::class.java)
+        LOGGER_REPLACE_ACTION.run { if (isDebugEnabled) debug("Replaced $target") }
     }
 }

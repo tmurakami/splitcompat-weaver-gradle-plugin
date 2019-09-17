@@ -21,6 +21,8 @@ import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 import java.io.File
 
+private val LOGGER = Logging.getLogger(ComponentNameCollector::class.java)
+
 internal class ComponentNameCollector(
     private val internalNames: MutableSet<String>,
     private val manifest: File
@@ -46,9 +48,5 @@ internal class ComponentNameCollector(
                 LOGGER.run { if (isDebugEnabled) debug("Target $qName: $className") }
             }
         }
-    }
-
-    private companion object {
-        private val LOGGER = Logging.getLogger(ComponentNameCollector::class.java)
     }
 }

@@ -29,6 +29,10 @@ import java.io.File
 import java.io.PrintWriter
 import java.io.StringWriter
 
+private const val METHOD_INSTALL = "com/google/android/play/core/splitcompat/SplitCompat.install"
+private val INTERNAL_NAME = Type.getInternalName(TestActivity1::class.java)
+private val SOURCE = File(ActionTest::class.java.getResource("/$INTERNAL_NAME.class").path)
+
 class ActionTest {
     @[Rule JvmField]
     val folder: TemporaryFolder = TemporaryFolder()
@@ -61,12 +65,5 @@ class ActionTest {
         val cr = ClassReader(readBytes())
         cr.accept(TraceClassVisitor(PrintWriter(writer)), SKIP_DEBUG or SKIP_FRAMES)
         return writer.toString()
-    }
-
-    private companion object {
-        private const val METHOD_INSTALL =
-            "com/google/android/play/core/splitcompat/SplitCompat.install"
-        private val INTERNAL_NAME = Type.getInternalName(TestActivity1::class.java)
-        private val SOURCE = File(ActionTest::class.java.getResource("/$INTERNAL_NAME.class").path)
     }
 }

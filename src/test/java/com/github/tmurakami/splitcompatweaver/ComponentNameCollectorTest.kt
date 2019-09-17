@@ -24,6 +24,25 @@ import org.xml.sax.InputSource
 import java.io.File
 import javax.xml.parsers.SAXParserFactory
 
+private val MANIFEST = """
+            |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">
+            |    <application>
+            |        <activity android:name=".A1" />
+            |        <activity android:name="x.y.A2" />
+            |        <service android:name=".S1"/>
+            |        <service android:name="x.y.z.S2"/>
+            |    </application>
+            |</manifest>
+            |""".trimMargin()
+
+private val INVALID_MANIFEST = """
+            |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">
+            |    <application>
+            |        <activity android:name="${'$'}{activityName}" />
+            |    </application>
+            |</manifest>
+            |""".trimMargin()
+
 class ComponentNameCollectorTest {
     @[Rule JvmField]
     val expectedException: ExpectedException = ExpectedException.none()!!
@@ -47,25 +66,5 @@ class ComponentNameCollectorTest {
         val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(hashSetOf(), File(path))
         INVALID_MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
-    }
-
-    private companion object {
-        private val MANIFEST = """
-            |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">
-            |    <application>
-            |        <activity android:name=".A1" />
-            |        <activity android:name="x.y.A2" />
-            |        <service android:name=".S1"/>
-            |        <service android:name="x.y.z.S2"/>
-            |    </application>
-            |</manifest>
-            |""".trimMargin()
-        private val INVALID_MANIFEST = """
-            |<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="a.b">
-            |    <application>
-            |        <activity android:name="${'$'}{activityName}" />
-            |    </application>
-            |</manifest>
-            |""".trimMargin()
     }
 }

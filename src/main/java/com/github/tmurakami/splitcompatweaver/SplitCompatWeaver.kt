@@ -26,6 +26,15 @@ import org.objectweb.asm.Opcodes.INVOKESTATIC
 import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.RETURN
 
+private val LOGGER = Logging.getLogger(SplitCompatWeaver::class.java)
+
+private const val CLASS_CONTEXT = "android/content/Context"
+private const val METHOD_ATTACH_BASE_CONTEXT = "attachBaseContext"
+private const val DESCRIPTOR_ATTACH_BASE_CONTEXT = "(L$CLASS_CONTEXT;)V"
+private const val CLASS_SPLIT_COMPAT = "com/google/android/play/core/splitcompat/SplitCompat"
+private const val METHOD_INSTALL = "install"
+private const val DESCRIPTOR_INSTALL = "(L$CLASS_CONTEXT;)Z"
+
 internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api, cv) {
     private lateinit var name: String
     private var superName: String? = null
@@ -111,16 +120,5 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
                 debug("Wove 'SplitCompat#$METHOD_INSTALL' into ${name.replace('/', '.')}")
             }
         }
-    }
-
-    private companion object {
-        private val LOGGER = Logging.getLogger(SplitCompatWeaver::class.java)
-        private const val CLASS_CONTEXT = "android/content/Context"
-        private const val METHOD_ATTACH_BASE_CONTEXT = "attachBaseContext"
-        private const val DESCRIPTOR_ATTACH_BASE_CONTEXT = "(L$CLASS_CONTEXT;)V"
-        private const val CLASS_SPLIT_COMPAT =
-            "com/google/android/play/core/splitcompat/SplitCompat"
-        private const val METHOD_INSTALL = "install"
-        private const val DESCRIPTOR_INSTALL = "(L$CLASS_CONTEXT;)Z"
     }
 }

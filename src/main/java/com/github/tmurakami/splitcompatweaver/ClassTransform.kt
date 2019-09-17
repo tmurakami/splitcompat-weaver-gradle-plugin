@@ -31,6 +31,8 @@ import org.gradle.api.logging.Logging
 import java.util.EnumSet
 import javax.xml.parsers.SAXParserFactory
 
+private val LOGGER = Logging.getLogger(ClassTransform::class.java)
+
 internal class ClassTransform(private val variants: Set<BaseVariant>) : Transform() {
     override fun getName(): String = "splitCompatWeaver"
     override fun getInputTypes(): Set<QualifiedContent.ContentType> = EnumSet.of(CLASSES)
@@ -76,8 +78,4 @@ internal class ClassTransform(private val variants: Set<BaseVariant>) : Transfor
         content: QualifiedContent,
         format: Format
     ) = content.run { getContentLocation(file.path, contentTypes, scopes, format) }
-
-    private companion object {
-        private val LOGGER = Logging.getLogger(ClassTransform::class.java)
-    }
 }

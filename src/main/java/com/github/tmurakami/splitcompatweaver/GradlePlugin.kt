@@ -20,6 +20,9 @@ import com.android.build.gradle.AppExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 
+private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
+private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.1"
+
 internal class GradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
         require(target.plugins.hasPlugin(DYNAMIC_FEATURE)) {
@@ -31,10 +34,5 @@ internal class GradlePlugin : Plugin<Project> {
         target.configurations.getByName("implementation").defaultDependencies {
             it += target.dependencies.create(DEPENDENCY_PLAY_CORE)
         }
-    }
-
-    private companion object {
-        private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
-        private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.1"
     }
 }
