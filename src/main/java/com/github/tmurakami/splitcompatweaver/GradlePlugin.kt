@@ -21,7 +21,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
-private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.1"
+private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.4"
 
 internal class GradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
