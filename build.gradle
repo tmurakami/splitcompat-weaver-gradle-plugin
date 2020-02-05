@@ -1,14 +1,14 @@
 buildscript {
-    ext.versions = [asm    : '7.2',
-                    kotlin : '1.3.50',
-                    android: [gradle: '3.5.0',],]
+    ext.versions = [asm    : '7.3.1',
+                    kotlin : '1.3.61',
+                    android: [gradle: '3.5.3',],]
     repositories {
         gradlePluginPortal()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin}"
         classpath 'com.github.ben-manes:gradle-versions-plugin:0.27.0'
-        classpath 'pl.allegro.tech.build:axion-release-plugin:1.10.2'
+        classpath 'pl.allegro.tech.build:axion-release-plugin:1.11.0'
     }
 }
 
@@ -48,8 +48,8 @@ dependencies {
     implementation "org.ow2.asm:asm:${versions.asm}"
     compileOnly "com.android.tools.build:gradle-api:${versions.android.gradle}"
     compileOnly("com.android.tools.build:gradle:${versions.android.gradle}") { transitive = false }
-    testImplementation 'junit:junit:4.12'
-    testImplementation 'com.google.truth:truth:1.0'
+    testImplementation 'junit:junit:4.13'
+    testImplementation 'com.google.truth:truth:1.0.1'
     testImplementation 'io.mockk:mockk:1.9.3'
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin}"
     testImplementation "com.android.tools.build:gradle-api:${versions.android.gradle}"

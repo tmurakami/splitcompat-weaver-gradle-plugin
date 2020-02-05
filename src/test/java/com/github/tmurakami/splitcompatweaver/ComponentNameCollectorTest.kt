@@ -17,9 +17,8 @@
 package com.github.tmurakami.splitcompatweaver
 
 import com.google.common.truth.Truth.assertThat
-import org.junit.Rule
+import org.junit.Assert.assertThrows
 import org.junit.Test
-import org.junit.rules.ExpectedException
 import org.xml.sax.InputSource
 import java.io.File
 import javax.xml.parsers.SAXParserFactory
@@ -29,8 +28,6 @@ private val MANIFEST = """
             |    <application>
             |        <activity android:name=".A1" />
             |        <activity android:name="x.y.A2" />
-            |        <service android:name=".S1"/>
-            |        <service android:name="x.y.z.S2"/>
             |    </application>
             |</manifest>
             |""".trimMargin()
@@ -44,27 +41,25 @@ private val INVALID_MANIFEST = """
             |""".trimMargin()
 
 class ComponentNameCollectorTest {
-    @[Rule JvmField]
-    val expectedException: ExpectedException = ExpectedException.none()!!
-
     @Test
     fun testParseManifest() {
         val internalNames = hashSetOf<String>()
         val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(internalNames, File(""))
         MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
-        assertThat(internalNames).containsExactly("a/b/A1", "x/y/A2", "a/b/S1", "x/y/z/S2")
+        assertThat(internalNames).containsExactly("a/b/A1", "x/y/A2")
     }
 
     @Test
     fun testParseInvalidManifest() {
         val path = "/foo/bar/app/src/main/AndroidManifest.xml"
-        expectedException.run {
-            expect(IllegalArgumentException::class.java)
-            expectMessage("The 'android:name' must not be a variable: $path")
-        }
         val parser = SAXParserFactory.newInstance().newSAXParser()
         val collector = ComponentNameCollector(hashSetOf(), File(path))
-        INVALID_MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
+        assertThrows(
+            "The 'android:name' must not be a variable: $path",
+            IllegalArgumentException::class.java
+        ) {
+            INVALID_MANIFEST.reader().use { parser.parse(InputSource(it), collector) }
+        }
     }
 }
