@@ -39,10 +39,10 @@ class SplitCompatWeaverTest {
         val activity = activityClass.createSplitCompatWovenActivity()
         mockkStatic(SplitCompat::class)
         try {
-            every { SplitCompat.install(activity) } returns true
+            every { SplitCompat.installActivity(activity) } returns true
             activity.attachBaseContext(mockk())
             activity.assertSuperAttachBaseContextCalled()
-            verify { SplitCompat.install(activity) }
+            verify { SplitCompat.installActivity(activity) }
         } finally {
             unmockkStatic(SplitCompat::class)
         }

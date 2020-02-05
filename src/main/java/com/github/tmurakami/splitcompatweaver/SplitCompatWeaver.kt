@@ -32,7 +32,7 @@ private const val CLASS_CONTEXT = "android/content/Context"
 private const val METHOD_ATTACH_BASE_CONTEXT = "attachBaseContext"
 private const val DESCRIPTOR_ATTACH_BASE_CONTEXT = "(L$CLASS_CONTEXT;)V"
 private const val CLASS_SPLIT_COMPAT = "com/google/android/play/core/splitcompat/SplitCompat"
-private const val METHOD_INSTALL = "install"
+private const val METHOD_INSTALL_ACTIVITY = "installActivity"
 private const val DESCRIPTOR_INSTALL = "(L$CLASS_CONTEXT;)Z"
 
 internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api, cv) {
@@ -77,7 +77,7 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
                     owner == superName &&
                     name == METHOD_ATTACH_BASE_CONTEXT &&
                     descriptor == DESCRIPTOR_ATTACH_BASE_CONTEXT
-                ) mv.visitSplitCompatInstallCall()
+                ) mv.visitSplitCompatInstallActivityCall()
             }
         } else mv
     }
@@ -101,7 +101,7 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
                     DESCRIPTOR_ATTACH_BASE_CONTEXT,
                     false
                 )
-                visitSplitCompatInstallCall()
+                visitSplitCompatInstallActivityCall()
                 visitInsn(RETURN)
                 visitMaxs(2, 2)
                 visitEnd()
@@ -110,14 +110,20 @@ internal class SplitCompatWeaver(api: Int, cv: ClassVisitor) : ClassVisitor(api,
         super.visitEnd()
     }
 
-    private fun MethodVisitor.visitSplitCompatInstallCall() {
+    private fun MethodVisitor.visitSplitCompatInstallActivityCall() {
         visitVarInsn(ALOAD, 0)
-        visitMethodInsn(INVOKESTATIC, CLASS_SPLIT_COMPAT, METHOD_INSTALL, DESCRIPTOR_INSTALL, false)
+        visitMethodInsn(
+            INVOKESTATIC,
+            CLASS_SPLIT_COMPAT,
+            METHOD_INSTALL_ACTIVITY,
+            DESCRIPTOR_INSTALL,
+            false
+        )
         visitInsn(POP)
         splitCompatInstallWoven = true
         LOGGER.run {
             if (isDebugEnabled) {
-                debug("Wove 'SplitCompat#$METHOD_INSTALL' into ${name.replace('/', '.')}")
+                debug("Wove 'SplitCompat#$METHOD_INSTALL_ACTIVITY' into ${name.replace('/', '.')}")
             }
         }
     }

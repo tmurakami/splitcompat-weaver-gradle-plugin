@@ -31,8 +31,10 @@ internal class GradlePlugin : Plugin<Project> {
         target.extensions.findByType(AppExtension::class.java)!!.run {
             registerTransform(ClassTransform(applicationVariants))
         }
-        target.configurations.getByName("implementation").defaultDependencies {
-            it += target.dependencies.create(DEPENDENCY_PLAY_CORE)
+        target.configurations.configureEach {
+            if (it.name == "implementation") {
+                it.dependencies += target.dependencies.create(DEPENDENCY_PLAY_CORE)
+            }
         }
     }
 }

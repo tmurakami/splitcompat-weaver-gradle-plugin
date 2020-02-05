@@ -38,7 +38,7 @@ internal class ComponentNameCollector(
         super.startElement(uri, localName, qName, attributes)
         when (qName) {
             "manifest" -> packageName = attributes.getValue("package")
-            "activity", "service" -> {
+            "activity" -> {
                 val name = attributes.getValue("android:name")
                 require(!name.startsWith("\${")) {
                     "The 'android:name' must not be a variable: $manifest"
