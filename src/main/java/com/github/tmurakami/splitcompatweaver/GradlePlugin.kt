@@ -21,16 +21,20 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 
 private const val DYNAMIC_FEATURE = "com.android.dynamic-feature"
-private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.4"
+private const val DEPENDENCY_PLAY_CORE = "com.google.android.play:core:1.6.5"
 
 internal class GradlePlugin : Plugin<Project> {
     override fun apply(target: Project) {
         require(target.plugins.hasPlugin(DYNAMIC_FEATURE)) {
             "Missing '$DYNAMIC_FEATURE' plugin"
         }
-        target.extensions.findByType(AppExtension::class.java)!!.run {
-            registerTransform(ClassTransform(applicationVariants))
+        val android = target.extensions.findByType(AppExtension::class.java)
+        try {
+            android!!.viewBinding // Added in the version 3.6.0
+        } catch (t: Throwable) {
+            throw IllegalArgumentException("Requires Android Gradle Plugin 3.6.0+")
         }
+        android.registerTransform(ClassTransform(android.applicationVariants))
         target.configurations.configureEach {
             if (it.name == "implementation") {
                 it.dependencies += target.dependencies.create(DEPENDENCY_PLAY_CORE)

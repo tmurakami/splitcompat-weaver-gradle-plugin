@@ -66,7 +66,7 @@ internal class ClassTransform(private val variants: Set<BaseVariant>) : Transfor
         val mf = (variants.find { it.name == variantName } ?: return emptySet())
             .outputs.single()
             .processManifestProvider.get()
-            .metadataFeatureManifestOutputDirectory
+            .metadataFeatureManifestOutputDirectory.asFile.get()
             .walkBottomUp().single { it.name == SdkConstants.ANDROID_MANIFEST_XML }
         LOGGER.run { if (isDebugEnabled) debug("manifest: $mf") }
         return hashSetOf<String>().also {
