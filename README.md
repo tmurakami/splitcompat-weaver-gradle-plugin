@@ -3,18 +3,21 @@
 [![CircleCI](https://circleci.com/gh/tmurakami/splitcompat-weaver-gradle-plugin.svg?style=shield)](https://circleci.com/gh/tmurakami/splitcompat-weaver-gradle-plugin)
 [![Release](https://jitpack.io/v/tmurakami/splitcompat-weaver-gradle-plugin.svg)](https://jitpack.io/#tmurakami/splitcompat-weaver-gradle-plugin)
 
-A Gradle plugin that weaves [`SplitCompat.install`](https://developer.android.com/reference/com/google/android/play/core/splitcompat/SplitCompat.html#install(android.content.Context)) into your
-Activities and Services.
+A Gradle plugin that weaves
+[`SplitCompat.installActivity`](https://developer.android.com/reference/com/google/android/play/core/splitcompat/SplitCompat.html#installActivity(android.content.Context))
+into your module activities.
 
-Applying this plugin, `SplitCompat.install` will be inserted after
-calling `super.attachBaseContext` in your Activities or Services, as
+Applying this plugin, `SplitCompat.installActivity` will be inserted
+after calling `super.attachBaseContext` in your module activities, as  
 shown below:
 
 ```java
-@Override
-protected void attachBaseContext(Context newBase) {
-    super.attachBaseContext(newBase);
-    SplitCompat.install(this); // This line will be added by this plugin.
+class YourDynamicFeatureActivity extends Activity {
+    @Override
+    protected void attachBaseContext(Context newBase) {
+        super.attachBaseContext(newBase);
+        SplitCompat.installActivity(this); // This line will be added by this plugin.
+    }
 }
 ```
 
@@ -30,20 +33,22 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0' // requires 3.4.0+
+        classpath 'com.android.tools.build:gradle:3.6.0' // requires 3.6.0+
         classpath 'com.github.tmurakami:splitcompat-weaver-gradle-plugin:0.3.0'
     }
 }
 ```
 
 Next, add `com.google.android.play:core` artifact as an `api` scoped
-dependency into your base module's `build.gradle`:
+dependency into your app's `build.gradle`:
 
 ```groovy
-api 'com.google.android.play:core:1.5.0' // requires 1.5.0+
+dependencies {
+    api 'com.google.android.play:core:1.6.5' // requires 1.6.5+
+}
 ```
 
-Finally, apply this plugin in your Dynamic Feature Module's `build.gradle`:
+Finally, apply this plugin in your module's `build.gradle`:
 
 ```groovy
 apply plugin: 'com.android.dynamic-feature'
@@ -52,9 +57,9 @@ apply plugin: 'com.github.tmurakami.splitcompat-weaver'
 
 ## Limitations
 
-- This plugin only affects the Activities and Services contained in your
-module to which it is applied. The classes in the libraries on which
-that module relies won't be rewritten.
+- This plugin only affects the activities contained in your module to
+which it is applied. The classes in the libraries on which that module
+relies won't be rewritten.
 
 ## License
 
